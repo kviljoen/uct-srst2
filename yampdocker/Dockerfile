@@ -23,3 +23,4 @@ RUN conda clean --tarballs -y
 
 ################## UCT Hex specific ###########################
 RUN mkdir -p /researchdata/fhgfs
+RUN mkdir -p /scratch/DB/bio/YAMP
