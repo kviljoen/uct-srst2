@@ -8,3 +8,6 @@ RUN conda update -n base conda && \
     conda env create -f /environment.yml && \
     conda clean -a
 ENV PATH /opt/conda/envs/YAMP/bin:$PATH
+################## UCT Hex specific ###########################
+RUN mkdir -p /researchdata/fhgfs
+RUN mkdir -p /scratch/DB/bio/YAMP
