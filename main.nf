@@ -1,5 +1,8 @@
 #!/usr/bin/env nextflow
-	
+/*
+vim: syntax=groovy
+-*- mode: groovy;-*-
+*/
 /**
 	Yet Another Metagenomic Pipeline (YAMP)
 	Copyright (C) 2017 	Dr Alessia Visconti 	      
