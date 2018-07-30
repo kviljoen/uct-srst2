@@ -30,11 +30,11 @@
 
 
 #This has been added to deal with the Docker image (fastQC requires X11 to be set)
-export JAVA_TOOL_OPTIONS="-Djava.awt.headless=true"
+#export JAVA_TOOL_OPTIONS="-Djava.awt.headless=true"
 
 #Performs QC
-fastqc --quiet --noextract --format fastq --outdir=. --threads $3 $1
+fastqc --quiet --extract --format fastq --outdir=. --threads $3 $1 #KL changed --noextract to --extract because unzip command not working in singularity container
 
 mv *_fastqc.html ${2}_fastqc.html
-unzip -p *_fastqc.zip ${base}*/fastqc_data.txt > ${2}_fastqc_data.txt  
-rm -rf *.zip	
+${base}*/fastqc_data.txt > ${2}_fastqc_data.txt  
+#rm -rf *.zip	
