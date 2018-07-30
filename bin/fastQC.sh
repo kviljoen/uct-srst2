@@ -30,7 +30,7 @@
 
 
 #This has been added to deal with the Docker image (fastQC requires X11 to be set)
-#export JAVA_TOOL_OPTIONS="-Djava.awt.headless=true"
+export JAVA_TOOL_OPTIONS="-Djava.awt.headless=true"
 
 #Performs QC
 fastqc --quiet --noextract --format fastq --outdir=. --threads $3 $1 
