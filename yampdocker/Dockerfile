@@ -3,7 +3,7 @@ MAINTAINER Katie Lennard
 LABEL authors="katieviljoen@gmail.com" \
     description="Docker image containing all requirements for the uct-cbio/YAMP pipeline"
 
-#install basic unix stuff
+#install basic system unix stuff (where -y flag indicates automatic yes to as answer to all prompts and run non-interactively
 RUN apt-get update && apt-get install -y \
 bash procps wget curl gzip perl \
 && rm -rf /var/lib/apt/lists/*
