@@ -12,6 +12,7 @@ bash procps wget curl gzip perl \
 COPY environment.yml /
 RUN conda update -n base conda && \
     conda env create -f /environment.yml && \
+    conda install -y conda-forge::openjdk fastqc=0.11.7 && \
     conda clean -a
 
 ENV PATH /opt/conda/envs/YAMP/bin:$PATH
