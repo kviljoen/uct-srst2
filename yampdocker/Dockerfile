@@ -5,7 +5,7 @@ LABEL authors="katieviljoen@gmail.com" \
 
 #install basic unix stuff
 RUN apt-get update && apt-get install -y \
-bash procps wget curl gzip perl mesa-gl \
+bash procps wget curl gzip perl \
 && rm -rf /var/lib/apt/lists/*
 
 #install specialized pipeline packages
