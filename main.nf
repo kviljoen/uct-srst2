@@ -25,59 +25,40 @@ vim: syntax=groovy
 	- https://github.com/alesssia/YAMP/issues
 */
 
-version='0.9.4.1'
-timestamp='20180424'
-
-/**
-	Prints version when asked for
-*/
-if (params.version) {
-	System.out.println("")
-	System.out.println("YET ANOTHER METAGENOMIC PIPELINE (YAMP) - Version: $version ($timestamp)")
-	exit 1
-}
 
 /**
 	Prints help when asked for
 */
 
-if (params.help) {
-	System.out.println("")
-	System.out.println("YET ANOTHER METAGENOMIC PIPELINE (YAMP) - Version: $version ($timestamp)")
-	System.out.println("This pipeline is distributed in the hope that it will be useful")
-	System.out.println("but WITHOUT ANY WARRANTY. See the GNU GPL v3.0 for more details.")
-	System.out.println("")
-	System.out.println("Please report comments and bugs to alessia.visconti@kcl.ac.uk")
-	System.out.println("or at https://github.com/alesssia/YAMP/issues.")
-	System.out.println("Check https://github.com/alesssia/YAMP for updates, and refer to")
-	System.out.println("https://github.com/alesssia/YAMP/wiki for more details.")
-	System.out.println("")
-	System.out.println("Usage: ")
-	System.out.println("   nextflow run YAMP.nf --reads1 R1 --reads2 R2 --prefix mysample --outdir path --mode MODE  ")
-	System.out.println("                [options] [-with-docker|-with-singularity]")
-	System.out.println("")
-	System.out.println("Mandatory arguments:")
-	System.out.println("    --reads1   R1      Forward (if paired-end) OR all reads (if single-end) file path")
-	System.out.println("    [--reads2] R2      Reverse reads file path (only if paired-end library layout)")
-	System.out.println("    --prefix   prefix  Prefix used to name the result files")
-	System.out.println("    --outdir   path    Output directory (will be outdir/prefix/)")
-	System.out.println("    --mode     <QC|characterisation|complete>")
-	System.out.println("Options:")
-	System.out.println("    --librarylayout <single|paired>")
-	System.out.println("    --dedup         <true|false>   whether to perform de-duplication")
-	System.out.println("    --keepQCtmpfile <true|false>   whether to save QC temporary files")
-	System.out.println("    --keepCCtmpfile <true|false>   whether to save community characterisation temporary files")
-	System.out.println("Please refer to nextflow.config for more options.")
-	System.out.println("")
-	System.out.println("Container:")
-	System.out.println("    Docker image to use with -with-docker|-with-singularity options is")
-	System.out.println("    'docker://alesssia/yampdocker'")
-	System.out.println("")
-	System.out.println("YAMP supports FASTQ and compressed FASTQ files.")
-	System.out.println("")
-    exit 1
-}
+def helpMessage() {
+    log.info"""
+    ===================================
+     uct-cbio/uct-yamp  ~  version ${params.version}
+    ===================================
+    Usage:
+    The typical command for running the pipeline is as follows:
+    nextflow run uct-cbio/uct-yamp --reads '*_R{1,2}.fastq.gz' -profile uct_hex
+    Mandatory arguments:
+      --reads                       Path to input data (must be surrounded with quotes)
+      -profile                      Hardware config to use. uct_hex OR standard
+    Options:
+      --singleEnd                   Specifies that the input is single end reads
+    References                      If not specified in the configuration file or you wish to overwrite any of the references.
 
+    Trimming options
+      --clip_r1 [int]               Instructs Trim Galore to remove bp from the 5' end of read 1 (or single-end reads)
+      --clip_r2 [int]               Instructs Trim Galore to remove bp from the 5' end of read 2 (paired-end reads only)
+      --three_prime_clip_r1 [int]   Instructs Trim Galore to remove bp from the 3' end of read 1 AFTER adapter/quality trimming has been performed
+      --three_prime_clip_r2 [int]   Instructs Trim Galore to re move bp from the 3' end of read 2 AFTER adapter/quality trimming has been performed
+    Presets:
+      --pico                        Sets trimming and standedness settings for the SMARTer Stranded Total RNA-Seq Kit - Pico Input kit. Equivalent to: --forward_stranded --clip_r1 3 --three_prime_clip_r2 3
+    Other options:
+      --outdir                      The output directory where the results will be saved
+      --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
+      --clusterOptions              Extra SLURM options, used in conjunction with Uppmax.config
+      -name                         Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.
+    """.stripIndent()
+}
 	
 /**
 	STEP 0. 
