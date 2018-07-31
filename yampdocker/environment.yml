@@ -3,7 +3,7 @@
 name: YAMP
 channels:
   - defaults
-  - conda-forge
+  - conda-forge::openjdk
   - bioconda
 dependencies:
   - bbmap=37.10
