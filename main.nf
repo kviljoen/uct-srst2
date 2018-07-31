@@ -282,7 +282,7 @@ else {
 }
 
 process dedup {
-	
+	tag{ "dedup" }
 	input:
 	set file(in1), file(in2) from todedup
 
@@ -371,7 +371,7 @@ if (!params.dedup) {
 //and then I take only the first two files
 mocktrim = Channel.from("null")
 process trim {
-
+	tag{ "trim" }
 	input:
    	set file(reads1), file(reads2) from totrim.concat(mocktrim).flatMap().take(2).buffer(size : 2)
 	file(adapters) from Channel.from( file(params.adapters) )
@@ -511,7 +511,7 @@ process trim {
 //and then I take only the first three files.
 mockdecontaminate = Channel.from("null", "null")
 process decontaminate {
-	
+	tag{ "decon" }
 	publishDir  workingdir, mode: 'move', pattern: "*_clean.fq.gz"
 		
 	input:
@@ -623,7 +623,7 @@ toQC = rawreads.mix(trimmedreads2qc, decontaminatedreads2qc)
 
 //Process performing all the Quality Assessment
 process qualityAssessment {
-	
+	tag{ "QA" }
 	publishDir  workingdir, mode: 'move', pattern: "*.{html,txt}"
 	  	
 	input:
@@ -700,7 +700,7 @@ if (params.mode == "characterisation") {
 
 
 process profileTaxa {
-
+	tag{ "mtplhn" }
 	publishDir  workingdir, mode: 'copy', pattern: "*.{biom,tsv}"
 	
 	input:
@@ -781,7 +781,7 @@ process profileTaxa {
 */
 
 process alphaDiversity {
-
+	tag{ "alpha" }
 	publishDir  workingdir, mode: 'move', pattern: "*.{tsv}"
 	
 	input:
@@ -871,7 +871,7 @@ process alphaDiversity {
 */
 
 process profileFunction {
-
+	tag{ "humann2" }
 	publishDir  workingdir, mode: 'copy', pattern: "*.{tsv,log}"
 	
 	input:
@@ -961,7 +961,7 @@ process profileFunction {
 */
 
 process logQC {
-
+	tag{ "logQC" }
 	input:
 	file(tolog)  from logQC.flatMap().mix(log2, log3, log5).toSortedList( { a, b -> a.name <=> b.name } )
 
@@ -980,7 +980,7 @@ process logQC {
 	
 	
 process saveQCtmpfile {
-
+	tag{ "saveQC" }
 	publishDir  workingdir, mode: 'copy'
 		
 	input:
@@ -1004,7 +1004,7 @@ process saveQCtmpfile {
 */
 
 process logCC {
-
+	tag{ "logCC" }
 	input:
 	file(tolog) from log7.mix(log8, log9).flatMap().toSortedList( { a, b -> a.name <=> b.name } )
 	
@@ -1024,7 +1024,7 @@ process logCC {
 	
 	
 process saveCCtmpfile {
-
+	tag{ "saveCC" }
 	publishDir  workingdir, mode: 'copy'
 		
 	input:
