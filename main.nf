@@ -632,7 +632,7 @@ process qualityAssessment {
 	output:
 	file ".log.$step$label" into logQC
 	file "${params.prefix}*_fastqc.html" 
-	file "${params.prefix}*_fastqc_data.txt" 
+	//file "${params.prefix}*_fastqc_data.txt" 
 
 	when:
 	params.mode == "QC" || params.mode == "complete"
@@ -659,7 +659,8 @@ process qualityAssessment {
 	
 	#Logging QC statistics (number of sequences, Pass/warning/fail, basic statistics, duplication level, kmers)
 	base=\$(basename $reads)
-	bash logQC.sh \$base ${params.prefix}${stem}${label}_fastqc_data.txt .log.$step$label
+	bash echo \$base
+	#bash logQC.sh \$base ${params.prefix}${stem}${label}_fastqc_data.txt .log.$step$label
 				
 	#Measures and log execution time			
 	endtime=\$(date +%s.%N)
