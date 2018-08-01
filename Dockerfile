@@ -4,12 +4,6 @@ ENV CONDA_INSTALLER="Miniconda3-latest-Linux-x86_64.sh"
 #Exports conda path
 ENV PATH $PATH:/opt/conda/bin/
 
-#Installs packages that will be used either for building other software 
-#or directly by YAMP
-#RUN apk --update add --no-cache bash procps wget curl gzip perl mesa-gl 
-
-#Installs miniconda 
-
 RUN apt-get update && apt-get install -y --no-install-recommends \
     bzip2 \
     libglib2.0-0 \
@@ -32,10 +26,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     #that is required to use YAMP on AWS Batch && \
     conda install -c bioconda -y bbmap=37.10 fastqc=0.11.5 metaphlan2=2.6.0 qiime=1.9.1 humann2=0.9.9 &&\
     conda install -c conda-forge -y awscli &&\
-    conda remove tk --yes && \
-    conda clean --yes --tarballs --packages --source-cache && \
-    apt-get purge -y --auto-remove wget ca-certificates  && \
-    apt-get clean
+    conda clean --yes --tarballs --packages --source-cache
+   
 
 
 
