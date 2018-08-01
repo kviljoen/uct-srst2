@@ -28,13 +28,3 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     conda install -c conda-forge -y awscli &&\
     conda clean --yes --tarballs --packages --source-cache
    
-
-
-
-
-
-
-
-
-
-
