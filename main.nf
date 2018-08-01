@@ -655,8 +655,9 @@ process qualityAssessment {
 	echo \" \" >> .log.$step$label
 	
 	#Does QC, extracts relevant information, and removes temporary files
-	bash fastQC.sh $reads ${params.prefix}${stem}${label} ${task.cpus} $reads
-	
+	base=\$(basename $reads)
+	#bash fastQC.sh $reads ${params.prefix}${stem}${label} ${task.cpus} $reads
+	fastqc -o $params.outdir $reads
 	#Logging QC statistics (number of sequences, Pass/warning/fail, basic statistics, duplication level, kmers)
 	base=\$(basename $reads)
 	bash echo \$base
