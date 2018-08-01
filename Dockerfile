@@ -23,8 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     curl \
     gzip \
-    perl \
-    mesa-gl && \
+    perl && \
     wget --quiet https://repo.continuum.io/miniconda/${CONDA_INSTALLER} && \
     /bin/bash /${CONDA_INSTALLER} -b -p /opt/conda && \
     rm ${CONDA_INSTALLER} && \
