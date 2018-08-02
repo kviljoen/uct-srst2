@@ -2,29 +2,13 @@
 /*
 vim: syntax=groovy
 -*- mode: groovy;-*-
+========================================================================================
+               M E T A G E N O M I C S   P I P E L I N E
+========================================================================================
+ METAGENOMICS NEXTFLOW PIPELINE ADAPTED FROM YAMP FOR UCT CBIO
+ 
+----------------------------------------------------------------------------------------
 */
-/**
-	Yet Another Metagenomic Pipeline (YAMP)
-	Copyright (C) 2017 	Dr Alessia Visconti 	      
-	      
-	This script is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-	
-	This script is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-	
-	You should have received a copy of the GNU General Public License
-	along with this script. If not, see <http://www.gnu.org/licenses/>.
-	
-	For any bugs or problems found, please contact us at:
-	- alessia.visconti@kcl.ac.uk ; 
-	- https://github.com/alesssia/YAMP/issues
-*/
-
 
 /**
 	Prints help when asked for
@@ -46,12 +30,6 @@ def helpMessage() {
     References                      If not specified in the configuration file or you wish to overwrite any of the references.
 
     Trimming options
-      --clip_r1 [int]               Instructs Trim Galore to remove bp from the 5' end of read 1 (or single-end reads)
-      --clip_r2 [int]               Instructs Trim Galore to remove bp from the 5' end of read 2 (paired-end reads only)
-      --three_prime_clip_r1 [int]   Instructs Trim Galore to remove bp from the 3' end of read 1 AFTER adapter/quality trimming has been performed
-      --three_prime_clip_r2 [int]   Instructs Trim Galore to re move bp from the 3' end of read 2 AFTER adapter/quality trimming has been performed
-    Presets:
-      --pico                        Sets trimming and standedness settings for the SMARTer Stranded Total RNA-Seq Kit - Pico Input kit. Equivalent to: --forward_stranded --clip_r1 3 --three_prime_clip_r2 3
     Other options:
       --outdir                      The output directory where the results will be saved
       --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
@@ -60,24 +38,28 @@ def helpMessage() {
     """.stripIndent()
 }
 	
-/**
-	STEP 0. 
-	
-	Checks input parameters and (if it does not exists) creates the directory 
-	where the results will be stored (aka working directory). 
-	Initialises the log file.
-	
-	The working directory is named after the prefix and located in the outdir 
-	folder. The log file, that will save summary statistics, execution time,
-	and warnings generated during the pipeline execution, will be saved in the 
-	working directory as "prefix.log".
-*/
+/*
+ * SET UP CONFIGURATION VARIABLES
+ */
 
+// Configurable variables
+params.name = false
+params.project = false
+params.email = false
+params.plaintext_email = false
 
-//Checking user-defined parameters	
-if (params.mode != "QC" && params.mode != "characterisation" && params.mode != "complete") {
-	exit 1, "Mode not available. Choose any of <QC, characterisation, complete>"
-}	
+// Show help emssage
+params.help = false
+if (params.help){
+    helpMessage()
+    exit 0
+}
+
+//Validate inputs	
+
+//if (params.mode != "QC" && params.mode != "characterisation" && params.mode != "complete") {
+//	exit 1, "Mode not available. Choose any of <QC, characterisation, complete>"
+//}	
 
 if (params.librarylayout != "paired" && params.librarylayout != "single") { 
 	exit 1, "Library layout not available. Choose any of <single, paired>" 
@@ -101,474 +83,207 @@ if (params.mode != "characterisation" && ( (params.librarylayout == "paired" && 
 	exit 1, "Please set the reads1 and/or reads2 parameters"
 }
 
+// Has the run name been specified by the user?
+//  this has the bonus effect of catching both -name and --name
+custom_runName = params.name
+if( !(workflow.runName ==~ /[a-z]+_[a-z]+/) ){
+  custom_runName = workflow.runName
+}
 
-//Creates working dir
-workingpath = params.outdir + "/" + params.prefix
-workingdir = file(workingpath)
-if( !workingdir.exists() ) {
-    if( !workingdir.mkdirs() ) 	{
-        exit 1, "Cannot create working directory: $workingpath"
-    } 
-}	
+Channel
+    .fromFilePairs( params.reads )
+    .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
+    .into { ReadPairsToQual; ReadPairs }
 
-//Creates main log file
-mylog = file(params.outdir + "/" + params.prefix + "/" + params.prefix + ".log")
+refFile = file(params.reference)
 
-//Logs headers
-mylog <<  """---------------------------------------------
-YET ANOTHER METAGENOMIC PIPELINE (YAMP) - Version: $version ($timestamp)
----------------------------------------------
-	
-Copyright (C) 2017 Dr Alessia Visconti <alessia.visconti@kcl.ac.uk>
-
-This pipeline is distributed in the hope that it will be useful
-but WITHOUT ANY WARRANTY. See the GNU GPL v3.0 for more details.
-
-Please report comments and bugs to alessia.visconti@kcl.ac.uk
-or at https://github.com/alesssia/YAMP/issues.						  
-Check https://github.com/alesssia/YAMP for updates, and refer to
-https://github.com/alesssia/YAMP/wiki for more details.
-
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++   						   	   
-"""
-	   
-//Fetches information on OS and java versions, including user name
-osname = System.getProperty("os.name") //Operating system name
-osarch = System.getProperty("os.arch") //Operating system architecture
-osversion = System.getProperty("os.version") //Operating system version
-osuser = System.getProperty("user.name") //User's account name
-
-javaversion = System.getProperty("java.version") //Java Runtime Environment version
-javaVMname = System.getProperty("java.vm.name") //Java Virtual Machine implementation name
-javaVMVersion = System.getProperty("java.vm.version") //Java Virtual Machine implementation version
-
+// Header log info
+log.info "==================================="
+log.info " uct-cbio/uct-yamp  ~  version ${params.version}"
+log.info "==================================="
+def summary = [:]
+summary['Run Name']     = custom_runName ?: workflow.runName
+summary['Reads']        = params.reads
+summary['OS']		= System.getProperty("os.name")
+summary['OS.arch']	= System.getProperty("os.arch") 
+summary['OS.version']	= System.getProperty("os.version")
+summary['javaversion'] = System.getProperty("java.version") //Java Runtime Environment version
+summary['javaVMname'] = System.getProperty("java.vm.name") //Java Virtual Machine implementation name
+summary['javaVMVersion'] = System.getProperty("java.vm.version") //Java Virtual Machine implementation version
 //Gets starting time		
 sysdate = new java.util.Date() 
+summary['User']		= System.getProperty("user.name") //User's account name
+summary['Max Memory']     = params.max_memory
+summary['Max CPUs']       = params.max_cpus
+summary['Max Time']       = params.max_time
+summary['Output dir']     = params.outdir
+summary['Working dir']    = workflow.workDir
+summary['Container']      = workflow.container
+if(workflow.revision) summary['Pipeline Release'] = workflow.revision
+summary['Current home']   = "$HOME"
+summary['Current user']   = "$USER"
+summary['Current path']   = "$PWD"
+summary['Script dir']     = workflow.projectDir
+summary['Config Profile'] = workflow.profile
+if(params.email) {
+    summary['E-mail Address'] = params.email
+}
+log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
+log.info "========================================="
+
 		
-//Logs starting time and other information about the run		
-mylog << """ 
-Analysis starting at $sysdate by user: $osuser
-Analysed sample(s): $params.reads1 and $params.reads2
-Results will be saved at $workingdir
-New files will be saved using the '$params.prefix' prefix
+/*
+ *
+ * Step 1: FastQC (run per sample)
+ *
+ */
 
-Analysis mode? $params.mode
-Library layout? $params.librarylayout
-Saving QC temporary files? $params.keepQCtmpfile
-Saving community characterisation temporary files? $params.keepCCtmpfile
-Performing de-duplication? $params.dedup	
+process runFastQC {
+    tag { "rFQC.${pairId}" }
+    publishDir "${params.outdir}/FilterAndTrim", mode: "copy", overwrite: false
 
-------------
-	
-Analysis introspection:
+    input:
+        set pairId, file(in_fastq) from ReadPairsToQual
 
-Operating System:
-	name:         $osname
-	architecture: $osarch
-	version:      $osversion
+    output:
+        file("${pairId}_fastqc/*.zip") into fastqc_files
 
-Java
-	version: $javaversion
-	Java Virtual Machine: $javaVMname ; version: $javaVMVersion
-
-nextflow:
-	version:   $nextflow.version	
-	build:     $nextflow.build	
-	timestamp: $nextflow.timestamp	
-			
-Container:
-	Docker image: $workflow.container		
-
-Repository:
-	url:            $workflow.repository
-	Git commit ID:  $workflow.commitId
-	Git branch/tag: $workflow.revision
-
-Analysis environment:
-
-	projectDir: $workflow.projectDir	
-	launchDir:  $workflow.launchDir
-	workingDir: $workflow.workDir	
-		
-	command line: $workflow.commandLine	
-	
-	Run name:   $workflow.runName	
-	Session ID: $workflow.sessionId	
-	profile:    $workflow.profile
-			
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++   
-	   
-""" 
-
-/**
-	Quality Assessment - STEP 1. Assessment of read quality of FASTQ file, 
-	done by means of FastQC. Multiple  plots are generated to show average 
-	phred quality scores and other metrics.
-
-	This step will generate (for each end, if the layout is paired) an HTML page,
-	showing a summary of the results and a set of plots offering a visual guidance
-	and for assessing the quality of the sample, and a zip file, that includes the 
-	HTML page, all the images and a text report. The script will save the HTML page 
-	and the text report and delete the archive.
-	Several information on multiple QC parameters are logged.
-*/
-
-
-//Defines channel with <step, readfile, label, stem> as input for fastQC script:
-//- step defines which step of the analysis is performed (QA of raw reads is the 1st,
-//  QA of the trimmed reads is the 4th, QA of the decontaminated reads is the 6th), and
-//  it will be used to sort the step's logs into the final YAMP log file.
-//- readfile is the reads FASTQ file, 
-//- label indicated whethere it is forward (R1) or reverse (R2) strand -- it is empty 
-//  for single-end reads.
-//- stem indicates which reads are QA'd (raw/trimmed/decontaminated reads), and it is
-//  used to name the report files.
-//These parameters are used also for the trimmed and decontaminated reads channel
-
-//When layout is single, the params reads2 is not used.
-//This channel will be processed by the process Quality Assessment, that is reported
-//at the end of the QC section of this script (that runs all the QC assessed tasks)
-if (params.librarylayout == "paired") {
-	rawreads = Channel.from( ['1', file(params.reads1), '_R1', '_rawreads'], ['1', file(params.reads2), '_R2', '_rawreads'] )
-}
-else {
-	rawreads = Channel.value( ['1', file(params.reads1), '', '_rawreads'] )
+    """
+    mkdir ${pairId}_fastqc
+    fastqc --outdir ${pairId}_fastqc \
+    ${in_fastq.get(0)} \
+    ${in_fastq.get(1)}
+    """
 }
 
+process runMultiQC{
+    tag { "rMQC" }
+    publishDir "${params.outdir}/FilterAndTrim", mode: 'copy', overwrite: false
 
-// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++   
-//	QUALITY CONTROL (QC)
-// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++   
+    input:
+        file('*') from fastqc_files.collect()
 
-/**
-	Quality Control - STEP 1. De-duplication. Only exact duplicates are removed.
+    output:
+        file('multiqc_report.html')
 
-	If the layout is "paired", two FASTQ files are outputted, one for each paired-end.
-	If "single", a single FASTQ file will be generated.
-	This step is OPTIONAL. De-duplication should be carried on iff you are
-    using PCR amplification (in this case identical reads are technical artefacts)
-	but not otherwise (identical reads will identify natural duplicates).
-*/
-
-// Defines channel with <readfile1, readfile2> as input for de-duplicates
-// When layout is single, the params.reads2 is not used, so nevermind its value
-if (params.mode == "QC" && params.librarylayout == "paired") {
-	todedup = Channel.value( [file(params.reads1), file(params.reads2)] )
-} 
-else if (params.mode == "QC") {
-	todedup = Channel.value( [file(params.reads1), "null"] )
+    """
+    multiqc .
+    """
 }
-else {
-	todedup = Channel.value( ["null1", "null2"] )
-}
+
+/*
+ *
+ * Step 2: De-duplication (run per sample)
+ *
+ */
 
 process dedup {
+	tag{ "dedup" }
 	
 	input:
-	set file(in1), file(in2) from todedup
+	set val(pairId), file(R1), file(R2) from ReadPairsToQual
 
 	output:
-	file  ".log.2" into log2
-	file("${params.prefix}_dedupe*.fq") into totrim
-	file("${params.prefix}_dedupe*.fq") into topublishdedupe
-
-	when:
-	(params.mode == "QC" || params.mode == "complete") && params.dedup
+	set val(pairId), file("${pairId}_dedupe*.fq") into totrim, topublishdedupe
 
 	script:
 	"""
-	#Measures execution time
-	sysdate=\$(date)
-	starttime=\$(date +%s.%N)
-	echo \"Performing Quality Control. STEP 1 [De-duplication] at \$sysdate\" > .log.2
-	echo \" \" >> .log.2
-	
-	#Sets the maximum memory to the value requested in the config file
-	maxmem=\$(echo \"$task.memory\" | sed 's/ //g' | sed 's/B//g')
-	
-	#Defines command for de-duplication
-	if [ \"$params.librarylayout\" = \"paired\" ]; then
-		CMD=\"clumpify.sh -Xmx\"\$maxmem\" in1=$in1 in2=$in2 out1=${params.prefix}_dedupe_R1.fq out2=${params.prefix}_dedupe_R2.fq qin=$params.qin dedupe subs=0 threads=${task.cpus}\"
-	else
-		CMD=\"clumpify.sh -Xmx\"\$maxmem\" in=$in1 out=${params.prefix}_dedupe.fq qin=$params.qin dedupe subs=0 threads=${task.cpus}\"
-	fi
-					
-	#Logs version of the software and executed command (BBmap prints on stderr)
-	version=\$(clumpify.sh --version 2>&1 >/dev/null | grep \"BBMap version\") 
-	echo \"Using clumpify.sh in \$version \" >> .log.2
-	echo \"Executing command: \$CMD \" >> .log.2
-	echo \" \" >> .log.2
-	
-	#De-duplicates
-	exec \$CMD 2>&1 | tee tmp.log
+	maxmem=\$(echo ${task.memory} | sed 's/ //g' | sed 's/B//g')
 
-	#Logs some figures about sequences passing de-duplication
-	echo  \"Clumpify's de-duplication stats: \" >> .log.2
-	echo \" \" >> .log.2
-	sed -n '/Reads In:/,/Duplicates Found:/p' tmp.log >> .log.2
-	echo \" \" >> .log.2
-	totR=\$(grep \"Reads In:\" tmp.log | cut -f 1 | cut -d: -f 2 | sed 's/ //g')
-	remR=\$(grep \"Duplicates Found:\" tmp.log | cut -f 1 | cut -d: -f 2 | sed 's/ //g')
-	survivedR=\$((\$totR-\$remR))
-	percentage=\$(echo \$survivedR \$totR | awk '{print \$1/\$2*100}' )
-	echo \"\$survivedR out of \$totR paired reads survived de-duplication (\$percentage%, \$remR reads removed)\" >> .log.2
-	echo \" \" >> .log.2
-
-	#Measures and logs execution time
-	endtime=\$(date +%s.%N)
-	exectime=\$(echo \"\$endtime \$starttime\" | awk '{print \$1-\$2}')
-	sysdate=\$(date)
-	echo \"STEP 1 (Quality control) terminated at \$sysdate (\$exectime seconds)\" >> .log.2
-	echo \" \" >> .log.2
-	echo \"++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\" >> .log.2
-	echo \" \" >> .log.2
+	clumpify.sh -Xmx${maxmem} in1=$R1 in2=$R2 out1=${pairId}_dedupe_R1.fq out2=${pairId}_dedupe_R2.fq \
+	qin=$params.qin dedupe subs=0 threads=${task.cpus}
+	
 	"""
 }
 
-/**
-	Quality control - STEP 2. Trimming of low quality bases and of adapter sequences. Short reads
-	are discarded. A decontamination of synthetic sequences is also pefoermed.
-	If dealing with paired-end reads, when either forward or reverse of a paired-read
-	are discarded, the surviving read is saved on a file of singleton reads.
 
-	If layout is "paired", three compressed FASTQ file (forward/reverse paired-end 
-	and singleton reads) are outputed, if "single", only one compressed FASTQ file
-	is returned. Several information are logged.
-*/
+/*
+ *
+ * Step 2: BBDUK: trim + filter (run per sample)
+ *
+ */
 
-
-//When the de-suplication is not done, the raw file should be pushed in the corret channel
-if (!params.dedup) {
-	if (params.librarylayout == "paired") {
-		totrim = Channel.value( [file(params.reads1), file(params.reads2)] )
-	} 
-	else {
-		totrim = Channel.value( [file(params.reads1), "null"] )
-	}
-}
-
-//When single-end reads are used, the input tuple (singleton) will not match input set 
-//cardinality declared by 'trim' process (pair), so I push two mock files in the channel,
-//and then I take only the first two files
-mocktrim = Channel.from("null")
-process trim {
-
+process bbduk {
+	tag{ "bbduk" }
+	
 	input:
-   	set file(reads1), file(reads2) from totrim.concat(mocktrim).flatMap().take(2).buffer(size : 2)
+   	set val(pairId), file(R1_deduped), file(R2_deduped) from totrim
 	file(adapters) from Channel.from( file(params.adapters) )
 	file(artifacts) from Channel.from( file(params.artifacts) )
 	file(phix174ill) from Channel.from( file(params.phix174ill) )
 
 	output:
-	file  ".log.3" into log3
-	file("${params.prefix}_trimmed*.fq") into trimmedreads
-	file("${params.prefix}_trimmed*.fq") into todecontaminate
-	file("${params.prefix}_trimmed*.fq") into topublishtrim 	
-
-	when:
-	params.mode == "QC" || params.mode == "complete"
+	set val(pairId), file("${pairId}_trimmed*.fq") into trimmedreads, todecontaminate, topublishtrim
 
    	script:
 	"""	
-	#Measures execution time
-	sysdate=\$(date)
-	starttime=\$(date +%s.%N)
-	echo \"Performing Quality Control. STEP 2 [Trimming] at \$sysdate\" > .log.3
-	echo \" \" >> .log.3
-
-	#Sets the maximum memory to the value requested in the config file
 	maxmem=\$(echo ${task.memory} | sed 's/ //g' | sed 's/B//g')
 
-	#Defines command for trimming of adapters and low quality bases
-	if [ \"$params.librarylayout\" = \"paired\" ]; then
-		CMD=\"bbduk.sh -Xmx\"\$maxmem\" in=$reads1 in2=$reads2 out=${params.prefix}_trimmed_R1_tmp.fq out2=${params.prefix}_trimmed_R2_tmp.fq outs=${params.prefix}_trimmed_singletons_tmp.fq ktrim=r k=$params.kcontaminants mink=$params.mink hdist=$params.hdist qtrim=rl trimq=$params.phred  minlength=$params.minlength ref=$adapters qin=$params.qin threads=${task.cpus} tbo tpe ow\"
-	else
-		CMD=\"bbduk.sh -Xmx\"\$maxmem\" in=$reads1 out=${params.prefix}_trimmed_tmp.fq ktrim=r k=$params.kcontaminants mink=$params.mink hdist=$params.hdist qtrim=rl trimq=$params.phred  minlength=$params.minlength ref=$adapters qin=$params.qin threads=${task.cpus} tbo tpe ow\"
-	fi
+	#Quality and adapter trim:
+	bbduk.sh -Xmx${maxmem} in=$reads1 in2=$reads2 out=${pairId}_trimmed_R1_tmp.fq \
+	out2=${pairId}_trimmed_R2_tmp.fq outs=${pairId}_trimmed_singletons_tmp.fq ktrim=r \
+	k=$params.kcontaminants mink=$params.mink hdist=$params.hdist qtrim=rl trimq=$params.phred \
+	minlength=$params.minlength ref=$adapters qin=$params.qin threads=${task.cpus} tbo tpe 
 	
-	#Logs version of the software and executed command (BBMap prints on stderr)
-	version=\$(bbduk.sh --version 2>&1 >/dev/null | grep \"BBMap version\") 
-	echo \"Using bbduk.sh in \$version \" >> .log.3
-	echo \"Using adapters in $params.adapters \" >> .log.3
-	echo \"Using synthetic contaminants in $params.phix174ill and in $params.artifacts \" >> .log.3
-	echo \" \" >> .log.3
-	echo \"Executing command: \$CMD \" >> .log.3
-	echo \" \" >> .log.3
-	
-	#Trims adapters and low quality bases	
-	exec \$CMD 2>&1 | tee tmp.log
-	
-	#Logs some figures about sequences passing trimming
-	echo  \"BBduk's trimming stats (trimming adapters and low quality reads): \" >> .log.3
-	sed -n '/Input:/,/Result:/p' tmp.log >> .log.3
-	echo \" \" >> .log.3			
-	if [ \"$params.librarylayout\" = \"paired\" ]; then
-		unpairedR=\$(wc -l ${params.prefix}_trimmed_singletons_tmp.fq | cut -d\" \" -f 1)
-		unpairedR=\$((\$unpairedR/4))
-		echo  \"\$unpairedR singleton reads whose mate was trimmed shorter preserved\" >> .log.3
-		echo \" \" >> .log.3
-	fi
+	#Synthetic contaminants trim:
+	bbduk.sh -Xmx${maxmem} in=${pairId}_trimmed_R1_tmp.fq in2=${pairId}_trimmed_R2_tmp.fq \
+	out=${pairId}_trimmed_R1.fq out2=${pairId}_trimmed_R2.fq k=31 ref=$phix174ill,$artifacts \
+	qin=$params.qin threads=${task.cpus} 
 
-	#Defines command for removing synthetic contaminants
-	if [ \"$params.librarylayout\" = \"paired\" ]; then
-		CMD=\"bbduk.sh -Xmx\"\$maxmem\" in=${params.prefix}_trimmed_R1_tmp.fq in2=${params.prefix}_trimmed_R2_tmp.fq out=${params.prefix}_trimmed_R1.fq out2=${params.prefix}_trimmed_R2.fq k=31 ref=$phix174ill,$artifacts qin=$params.qin threads=${task.cpus} ow\"
-	else
-		CMD=\"bbduk.sh -Xmx\"\$maxmem\" in=${params.prefix}_trimmed_tmp.fq out=${params.prefix}_trimmed.fq k=31 ref=$phix174ill,$artifacts qin=$params.qin threads=${task.cpus} ow\"
-	fi
+	#Synthetic contaminants trim for singleton read file:
+	bbduk.sh -Xmx${maxmem} in=${pairId}_trimmed_singletons_tmp.fq out=${pairId}_trimmed_singletons.fq \
+	k=31 ref=$phix174ill,$artifacts qin=$params.qin threads=${task.cpus}
 
-	#Logs executed command
-	echo \"Executing command: \$CMD \" >> .log.3
-	echo \" \" >> .log.3
-	
-	#Removes synthetic contaminants
-	exec \$CMD 2>&1 | tee tmp.log
-
-	#Logs some figures about sequences passing deletion of contaminants
-	echo  \"BBduk's trimming stats (synthetic contaminants): \" >> .log.3
-	sed -n '/Input:/,/Result:/p' tmp.log >> .log.3
-	echo \" \" >> .log.3
-
-	#Removes synthetic contaminants and logs some figures (singleton read file, 
-	#that exists iif the library layout was 'paired')
-	if [ \"$params.librarylayout\" = \"paired\" ]; then
-		CMD=\"bbduk.sh -Xmx\"\$maxmem\" in=${params.prefix}_trimmed_singletons_tmp.fq out=${params.prefix}_trimmed_singletons.fq k=31 ref=$phix174ill,$artifacts qin=$params.qin threads=${task.cpus} ow\"
-		
-		echo \"Executing command: \$CMD \" >> .log.3
-		echo \" \" >> .log.3
-	
-		#Removes synthetic contaminants
-		exec \$CMD 2>&1 | tee tmp.log		
-							
-		#Logs some figures about sequences passing deletion of contaminants
-		echo  \"BBduk's trimming stats (synthetic contaminants, singleton reads): \" >> .log.3
-		sed -n '/Input:/,/Result:/p' tmp.log >> .log.3
-		echo \" \" >> .log.3
-	fi
-	
 	#Removes tmp files. This avoids adding them to the output channels
-	rm -rf ${params.prefix}_trimmed*_tmp.fq 
+	rm -rf ${pairId}_trimmed*_tmp.fq 
 
-	#Measures and log execution time
-	endtime=\$(date +%s.%N)
-	exectime=\$(echo \"\$endtime \$starttime\" | awk '{print \$1-\$2}')
-	sysdate=\$(date)
-	echo \"STEP 2 (Quality Control) terminated at \$sysdate (\$exectime seconds)\" >> .log.3
-	echo \" \" >> .log.3
-	echo \"++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\" >> .log.3
-	echo \"\" >> .log.3
 	"""
 }
 
 
-/**
-	Quality assessed - STEP 2. Quality control after trimming.
-
-	An output similar to that generated by STEP 1 is produced.
-*/
+/*
+ *
+ * Step 3: FastQC post-filter and -trim (run per sample)
+ *
+ */
 
 //This comment is a place holder. The execution of this step is delegated to the process
 //Quality Assessment, that is reported at the end of the QC section of this script and
 //that runs all the QC assessed tasks.
 
-/**
-	Quality control - STEP 3. Decontamination. Removes external organisms' contamination, 
-	using a previously created index. When paired-end are used, decontamination is 
-	carried on idependently on paired reads and on singleton reads thanks to BBwrap, 
-	that calls BBmap once on the paired reads and once on the singleton ones, merging
-	 the results on a single output file.
+/*
+ *
+ * Step 4: Decontamination (run per sample)
+ *
+ */
 
-	Two files are outputted: the FASTQ of the decontaminated reads (including both
-	paired-reads and singletons) and that of the contaminating reads (that can be
-	used for refinements/checks).
-	Please note that if keepQCtmpfile is set to false, the file of the contaminating 
-	reads is discarded
-
-	TODO: use BBsplit for multiple organisms decontamination, or fix the ref to a 
-	FASTA file pangenome
-*/
-
-//When single-end reads are used, the input tuple (singleton) will not match input set 
-//cardinality declared by 'trim' process (triplet), so I push two mock files in the channel,
-//and then I take only the first three files.
-mockdecontaminate = Channel.from("null", "null")
 process decontaminate {
+	tag{ "decon" }
 	
 	publishDir  workingdir, mode: 'move', pattern: "*_clean.fq.gz"
 		
 	input:
-	set file(infile1), file(infile2), file(infile12) from todecontaminate.concat(mockdecontaminate).flatMap().take(3).buffer(size : 3)
+	set val(pairId), file(infile1), file(infile2), file(infile12) from todecontaminate
 	file(refForeingGenome) from Channel.from( file(params.refForeingGenome, type: 'dir') )
 	
 	output:
 	file "*_clean.fq.gz"
-	file  ".log.5" into log5
-	file "${params.prefix}_clean.fq" into decontaminatedreads
-	file "${params.prefix}_clean.fq" into toprofiletaxa
-	file "${params.prefix}_clean.fq" into toprofilefunctionreads
-	file "${params.prefix}_cont.fq" into topublishdecontaminate
+	file "${pairId}_clean.fq" into decontaminatedreads, toprofiletaxa, toprofilefunctionreads, topublishdecontaminate
 
-	when:
-	params.mode == "QC" || params.mode == "complete"
 	
 	script:
 	"""
-	#Measures execution time
-	sysdate=\$(date)
-	starttime=\$(date +%s.%N)
-	echo \"Performing Quality Control. STEP 3 [Decontamination] at \$sysdate\" > .log.5
-	echo \" \" >> .log.5
-
-	#Sets the maximum memory to the value requested in the config file
+	
 	maxmem=\$(echo ${task.memory} | sed 's/ //g' | sed 's/B//g')
 	
-	#Defines command for decontamination
-	if [ \"$params.librarylayout\" = \"paired\" ]; then
-		CMD=\"bbwrap.sh  -Xmx\"\$maxmem\" mapper=bbmap append=t in1=$infile1,$infile12 in2=$infile2,null outu=${params.prefix}_clean.fq outm=${params.prefix}_cont.fq minid=$params.mind maxindel=$params.maxindel bwr=$params.bwr bw=12 minhits=2 qtrim=rl trimq=$params.phred path=$refForeingGenome qin=$params.qin threads=${task.cpus} untrim quickmatch fast ow\"
-	else
-		CMD=\"bbwrap.sh  -Xmx\"\$maxmem\" mapper=bbmap append=t in1=$infile1 outu=${params.prefix}_clean.fq outm=${params.prefix}_cont.fq minid=$params.mind maxindel=$params.maxindel bwr=$params.bwr bw=12 minhits=2 qtrim=rl trimq=$params.phred path=$refForeingGenome qin=$params.qin threads=${task.cpus} untrim quickmatch fast ow\"
-	fi
+	#Decontaminate from foreign genomes
+	bbwrap.sh  -Xmx${maxmem} mapper=bbmap append=t in1=$infile1,$infile12 in2=$infile2, null \
+	outu=${pairId}_clean.fq outm=${pairId}_cont.fq minid=$params.mind \
+	maxindel=$params.maxindel bwr=$params.bwr bw=12 minhits=2 qtrim=rl trimq=$params.phred \
+	path=$refForeingGenome qin=$params.qin threads=${task.cpus} untrim quickmatch fast
 	
-	#Logs version of the software and executed command (BBmap prints on stderr)
-	version=\$(bbwrap.sh --version 2>&1 >/dev/null | grep \"BBMap version\") 
-	echo \"Using bbwrap.sh in \$version \" >> .log.5
-	echo \"Using contaminant (pan)genome indexed in $params.refForeingGenome \" >> .log.5
-	echo \" \" >> .log.5
-	echo \"Executing command: \$CMD \" >> .log.5
-	echo \" \" >> .log.5
-	
-	#Decontaminates
-	exec \$CMD 2>&1 | tee tmp.log
-	
-	#Logs some figures about decontaminated/contaminated reads
-	echo  \"BBwrap's human decontamination stats (paired reads): \" >> .log.5
-	sed -n '/Read 1 data:/,/N Rate:/p' tmp.log | head -17 >> .log.5
-	echo \" \" >> .log.5
-	sed -n '/Read 2 data:/,/N Rate:/p' tmp.log >> .log.5
-	echo \" \" >> .log.5
-	
-	if [ \"$params.librarylayout\" = \"paired\" ]; then
-		echo  \"BBmap's human decontamination stats (singletons reads): \" >> .log.5
-		sed -n '/Read 1 data:/,/N Rate:/p' tmp.log | tail -17 >> .log.5
-		echo \" \" >> .log.5
-	fi
+	gzip -c ${pairId}_clean.fq > ${pairId}_clean.fq.gz
 
-	gzip -c ${params.prefix}_clean.fq > ${params.prefix}_clean.fq.gz
-
-	nClean=\$(wc -l ${params.prefix}_clean.fq | cut -d\" \" -f 1)
-	nClean=\$((\$nClean/4))
-	nCont=\$(wc -l ${params.prefix}_cont.fq | cut -d\" \" -f 1)
-	nCont=\$((\$nCont/4))
-	echo \"\$nClean reads survived decontamination (\$nCont reads removed)\" >> .log.5
-	echo \" \" >> .log.5
-
-	#Measures and log execution time
-	endtime=\$(date +%s.%N)
-	exectime=\$(echo \"\$endtime \$starttime\" | awk '{print \$1-\$2}')
-	sysdate=\$(date)
-	echo \"STEP 3 (Quality Control) terminated at \$sysdate (\$exectime seconds)\" >> .log.5
-	echo \" \" >> .log.5
-	echo \"++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\" >> .log.5
-	echo \"\" >> .log.5
 	"""
 }
 
