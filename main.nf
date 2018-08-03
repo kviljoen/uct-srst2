@@ -57,31 +57,14 @@ if (params.help){
 
 //Validate inputs	
 
-//if (params.mode != "QC" && params.mode != "characterisation" && params.mode != "complete") {
-//	exit 1, "Mode not available. Choose any of <QC, characterisation, complete>"
-//}	
-
-if (params.librarylayout != "paired" && params.librarylayout != "single") { 
-	exit 1, "Library layout not available. Choose any of <single, paired>" 
-}   
+//if (params.librarylayout != "paired" && params.librarylayout != "single") { 
+//	exit 1, "Library layout not available. Choose any of <single, paired>" 
+//}   
 
 if (params.qin != 33 && params.qin != 64) {  
 	exit 1, "Input quality offset (qin) not available. Choose either 33 (ASCII+33) or 64 (ASCII+64)" 
 }   
 
-//--reads2 can be omitted when the library layout is "single" (indeed it specifies single-end
-//sequencing)
-if (params.mode != "characterisation" && params.librarylayout != "single" && (params.reads2 == "null") ) {
-	exit 1, "If dealing with paired-end reads, please set the reads2 parameters\nif dealing with single-end reads, please set the library layout to 'single'"
-}
-
-//--reads1 and --reads2 can be omitted (and the default from the config file used instead) 
-//only when mode is "characterisation". Obviously, --reads2 should be always omitted when the
-//library layout is single.
-if (params.mode != "characterisation" && ( (params.librarylayout == "paired" && (params.reads1 == "null" || params.reads2 == "null")) ||			
- 							 			   params.librarylayout == "single" && params.reads1 == "null") ) {
-	exit 1, "Please set the reads1 and/or reads2 parameters"
-}
 
 // Has the run name been specified by the user?
 //  this has the bonus effect of catching both -name and --name
