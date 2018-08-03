@@ -199,7 +199,7 @@ process dedup {
 
 /*
  *
- * Step 2: BBDUK: trim + filter (run per sample)
+ * Step 3: BBDUK: trim + filter (run per sample)
  *
  */
 
@@ -243,7 +243,7 @@ process bbduk {
 
 /*
  *
- * Step 3: FastQC post-filter and -trim (run per sample)
+ * Step 4: FastQC post-filter and -trim (run per sample)
  *
  */
 
@@ -282,7 +282,7 @@ process runMultiQC_postfilterandtrim {
 
 /*
  *
- * Step 4: Decontamination (run per sample)
+ * Step 5: Decontamination (run per sample)
  *
  */
 
@@ -319,7 +319,7 @@ process decontaminate {
 
 /*
  *
- * Step 5:  metaphlan2 (run per sample)
+ * Step 6:  metaphlan2 (run per sample)
  *
  */
 
@@ -413,11 +413,11 @@ process humann2 {
 }
 
 
-
-
-/**
-	CLEANUP 2. Saves the temporary files generate during QC (if the users requested so)
-*/
+/*
+ *
+ * Step 7:  Save trimmed and decontaminated reads if requested
+ *
+ */
 	
 	
 process saveQCtmpfile {
@@ -439,13 +439,11 @@ process saveQCtmpfile {
 	"""
 }
 
-
-
-/**
-	CLEANUP 4. Saves the temporary files generate during the community characterisation 
-	(if the users requested so)
-*/
-	
+/*
+ *
+ * Step 8:  Save tmp files from metaphlan2 and humann2 if requested
+ *
+ */	
 	
 process saveCCtmpfile {
 
