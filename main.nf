@@ -297,7 +297,7 @@ process decontaminate {
 	
 	output:
 	file "*_clean.fq.gz"
-	file "${pairId}_clean.fq" into decontaminatedreads, tometaphlan2, toprofilefunctionreads, topublishdecontaminate
+	file "${pairId}_clean.fq" into cleanreadstometaphlan2, cleanreadstohumann2, topublishdecontaminate
 
 	
 	script:
@@ -325,16 +325,17 @@ process decontaminate {
 
 process metaphlan2 {
 	tag{ "metaphlan2" }
+	
 	publishDir  workingdir, mode: 'copy', pattern: "*.{biom,tsv}", overwrite: false
 	
 	input:
-	file(infile) from tometaphlan2
+	file(infile) from cleanreadstometaphlan2
 	file(mpa_pkl) from Channel.from( file(params.mpa_pkl) )
 	file(bowtie2db) from Channel.fromPath( params.bowtie2db, type: 'dir' )
 
     output:
 	file "${pairId}.biom" into toalphadiversity
-	file "${pairId}_metaphlan_bugs_list.tsv" into tohumann2
+	file "${pairId}_metaphlan_profile.tsv" into metaphlantohumann2
 	file "${pairId}_bt2out.txt" into topublishprofiletaxa
 
 
@@ -347,179 +348,56 @@ process metaphlan2 {
 	#Estimate taxon abundances
 	metaphlan2.py --input_type fastq --tmp_dir=. --biom ${pairId}.biom --bowtie2out=${pairId}_bt2out.txt \
 	--mpa_pkl $mpa_pkl  --bowtie2db $bowtie2db/$params.bowtie2dbfiles --bt2_ps $params.bt2options --nproc ${task.cpus} \
-	$infile ${pairId}_metaphlan_bugs_list.tsv
-
+	$infile ${pairId}_metaphlan_profile.tsv
 	
 	#Sets the prefix in the biom file
-	sed -i 's/Metaphlan2_Analysis/${params.prefix}/g' ${params.prefix}.biom
-	sed -i 's/Metaphlan2_Analysis/${params.prefix}/g' ${params.prefix}_metaphlan_bugs_list.tsv
+	sed -i 's/Metaphlan2_Analysis/${pairId}/g' ${pairId}.biom
+	sed -i 's/Metaphlan2_Analysis/${pairId}/g' ${pairId}_metaphlan_profile.tsv
+	
+	#KL add: make one file combining all samples (needs testing, perphaps own process)
+	merge_metaphlan_tables.py *_metaphlan_profile.tsv > metaphlan_merged_abundance_table.tsv
 
 	"""
 }
 
-/**
-	Community Characterisation - STEP 2. Evaluates alpha-diversity, that is the 
-	mean species diversity the given sample. Please note that the alpha diversity 
-	is the only per-sample measure, so it is the only one evaluated by this module. 
- 	
-	If a newick tree is provided as input (see QIIME documentation for details), a 
-	further and more reliable phylogenetic measure is evaluated (i.e., PD_whole_tree).
 
-	One text file listing the alpha-diversity values, evaluated by means of
-	multiple measure, is outputted.
-*/
+process humann2 {
 
-process alphaDiversity {
-
-	publishDir  workingdir, mode: 'move', pattern: "*.{tsv}"
+	publishDir  workingdir, mode: 'copy', pattern: "*.{tsv,log}", overwrite: false
 	
 	input:
-	file(infile) from toalphadiversity
-	file(treepath) from Channel.from( file(params.treepath) )
-	
-    output:
-	file ".log.8" into log8
-	file "${params.prefix}_alpha_diversity.tsv"
-	
-	when:
-	params.mode == "characterisation" || params.mode == "complete"
-
-	script:
-	"""
-	#Measures execution time
-	sysdate=\$(date)
-	starttime=\$(date +%s.%N)
-	echo \"Performing Community Characterisation. STEP 2 [Evaluating alpha-diversity] at \$sysdate\" > .log.8
-	echo \" \" >> .log.8
-
-	#It checks if the profiling was successful, that is if identifies at least three species
-	n=\$(grep -o s__ $infile | wc -l  | cut -d\" \" -f 1)
-	if (( n > 3 ))
-	then
-		#Defines command -- if the tree path is not specified, not all the alpha 
-		#measures can be evaluated (that is, PD_whole_tree is skipped)
-		if [ $params.treepath == null ]
-		then
-			CMD=\"alpha_diversity.py -i $infile -o ${params.prefix}_alpha_diversity.tsv -m ace,berger_parker_d,brillouin_d,chao1,chao1_ci,dominance,doubles,enspie,equitability,esty_ci,fisher_alpha,gini_index,goods_coverage,heip_e,kempton_taylor_q,margalef,mcintosh_d,mcintosh_e,menhinick,michaelis_menten_fit,observed_otus,observed_species,osd,simpson_reciprocal,robbins,shannon,simpson,simpson_e,singles,strong\"
-		else
-			CMD=\"alpha_diversity.py -i $infile -o ${params.prefix}_alpha_diversity.tsv -m ace,berger_parker_d,brillouin_d,chao1,chao1_ci,dominance,doubles,enspie,equitability,esty_ci,fisher_alpha,gini_index,goods_coverage,heip_e,kempton_taylor_q,margalef,mcintosh_d,mcintosh_e,menhinick,michaelis_menten_fit,observed_otus,observed_species,osd,simpson_reciprocal,robbins,shannon,simpson,simpson_e,singles,strong,PD_whole_tree -t $treepath\"
-		fi
-		
-		#Logs version of the software and executed command
-		version=\$(alpha_diversity.py --version) 
-		echo \"Using \$version \" >> .log.8
-		if [ $params.treepath == null ]
-		then
-			echo \"Newick tree not used, PD_whole_tree skipped\" >> .log.8
-		else
-			echo \"Using Newick tree in $params.treepath\" >> .log.8
-		fi
-		echo \" \" >> .log.8
-		echo \"Executing command: \$CMD \" >> .log.8
-		echo \" \" >> .log.8
-		
-		#Evaluates alpha diversities, redirect is done here because QIIME gets it as an extra parameter
-		exec \$CMD 2>&1 | tee tmp.log
-	else
-		#Also if the alpha are not evaluated the file should be created in order to be returned
-		echo \"Not enough classified species detected (N=\$n). Analysis skipped.\" >> .log.8
-		touch ${params.prefix}_alpha_diversity.tsv 
-	fi
-	
-	#Measures and log execution time
-	endtime=\$(date +%s.%N)
-	exectime=\$(echo \"\$endtime \$starttime\" | awk '{print \$1-\$2}')
-	sysdate=\$(date)
-	echo \"\" >> .log.8
-	echo \"STEP 2 (Community Characterisation) terminated at \$sysdate (\$exectime seconds)\" >> .log.8
-	echo \" \" >> .log.8
-	echo \"++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\" >> .log.8
-	echo \"\" >> .log.8
-	"""
-}
-
-
-/**
-	Community Characterisation - STEP 3. Performs the functional annotation using HUMAnN2.
-	HUMAnN2 will bypasses the taxomonic profiling step (since it has already
-	been performed) and uses the list of specied detected on step 7.
-	While the aligners are forced to be Bowtie2 and DIAMOND, the user can
-	select the UniRef database to use (UniRef50, UniRef90).
-
-	It outputs several files, and some of them will be removed if keepCCtmpfile is
-	set to false. Namely, it creates:
-	- three tab-separated files representing the gene families, and the pathways'
-	  coverahe and abundancies
-	- a SAM file representing the full alignment from Bowtie2 (saved only if keepCCtmpfile
-	  is set to true)
-    - two tab-separated file representing the reduced aligned reads from both
-	  Bowtie2 and DIAMOND (saved only if keepCCtmpfile is set to true)
-	- two FASTA file, representing the unaligned reads from both Bowtie2 and
-	  DIAMOND (saved only if keepCCtmpfile is set to true)
-	- a log of the execution
-*/
-
-process profileFunction {
-
-	publishDir  workingdir, mode: 'copy', pattern: "*.{tsv,log}"
-	
-	input:
-	file(cleanreads) from toprofilefunctionreads
-	file(metaphlanbuglist) from toprofilefunctionbugs
+	set val(pairId), file(cleanreads) from cleanreadstohumann2
+	file(humann2_profile) from metaphlantohumann2
 	file(chocophlan) from Channel.fromPath( params.chocophlan, type: 'dir' )
 	file(uniref) from Channel.fromPath( params.uniref, type: 'dir' )
 	
     output:
-	file ".log.9" into log9
-	file "${params.prefix}_HUMAnN2.log"
-	file "${params.prefix}_genefamilies.tsv"
-	file "${params.prefix}_pathcoverage.tsv"
-	file "${params.prefix}_pathabundance.tsv"
+	file "${pairId}_genefamilies.tsv"
+	file "${pairId}_pathcoverage.tsv"
+	file "${pairId}_pathabundance.tsv"
 	
-	//Those may or may be not kept, according to the value of the keepCCtmpfile parameter
-	set ("${params.prefix}_bowtie2_aligned.sam", "${params.prefix}_bowtie2_aligned.tsv", "${params.prefix}_diamond_aligned.tsv", "${params.prefix}_bowtie2_unaligned.fa", "${params.prefix}_diamond_unaligned.fa") into topublishhumann2	
-
-	when:
-	params.mode == "characterisation" || params.mode == "complete"
+	//Those may or may not be kept, according to the value of the keepCCtmpfile parameter
+	set ("${pairId}_bowtie2_aligned.sam", "${pairId}_bowtie2_aligned.tsv", "${pairId}_diamond_aligned.tsv", 
+	     "${pairId}_bowtie2_unaligned.fa", "${pairId}_diamond_unaligned.fa") into topublishhumann2	
 
 	script:
 	"""
-	#Measures execution time
- 	sysdate=\$(date)
- 	starttime=\$(date +%s.%N)
- 	echo \"Performing Community Characterisation. STEP 3 [Performing functional annotation] with HUMAnN2 at \$sysdate\" > .log.9
- 	echo \" \" >> .log.9
+	#Functional annotation
+	humann2 --input $cleanreads --output . --output-basename ${pairId} \
+	--taxonomic-profile $humann2_profile --nucleotide-database $chocophlan --protein-database $uniref \
+	--pathways metacyc --threads ${task.cpus} --memory-use minimum
 
-	#Defines HUMAnN2 command taking advantages of the MetaPhlAn2's results
-	CMD=\"humann2 --input $cleanreads --output . --output-basename ${params.prefix} --taxonomic-profile $metaphlanbuglist --nucleotide-database $chocophlan --protein-database $uniref --pathways metacyc --threads ${task.cpus} --memory-use minimum\"
-	
-	#Logs version of the software and executed command
-	#HUMAnN2 prints on stderr
-	version=\$(humann2 --version 2>&1 >/dev/null | grep \"humann2\") 
-	echo \"Using \$version \" >> .log.9
-	echo \"Using ChocoPhlAn database in $params.chocophlan \" >> .log.9
-	echo \"Using UniRef database in $params.uniref \" >> .log.9
-	echo \" \" >> .log.9
-	echo \"Executing command: \$CMD > ${params.prefix}_HUMAnN2.log\" >> .log.9
-	echo \" \" >> .log.9
 	
 	#Performs functional annotation, redirect is done here because HUMAnN2 freaks out
-	#This is  also reported in the log.
-	exec \$CMD 2>&1 | tee ${params.prefix}_HUMAnN2.log 
 
-	#If `|| true` is not add, nextflow stops... WTF 
-	grep \"Total species selected from prescreen:\" ${params.prefix}_HUMAnN2.log >> .log.9 || true
-	grep \"Selected species explain\" ${params.prefix}_HUMAnN2.log >> .log.9 || true
-	grep \"Unaligned reads after nucleotide alignment:\" ${params.prefix}_HUMAnN2.log >> .log.9 || true
-	grep \"Total gene families after translated alignment:\" ${params.prefix}_HUMAnN2.log >> .log.9 || true
-	grep \"Unaligned reads after translated alignment:\" ${params.prefix}_HUMAnN2.log >> .log.9 || true
-	echo \"More information on HUMAnN2 run are available in the ${params.prefix}_HUMAnN2.log file\" >> .log.9 
 
 	#Some of temporary files (if they exist) may be moved in the working directory, 
 	#according to the keepCCtmpfile parameter. Others (such as the bowties2 indexes), 
 	#are always removed. Those that should be moved, but have not been created by 
 	#HUMAnN2, are now created by the script (they are needed as output for the channel)
-	files=(${params.prefix}_bowtie2_aligned.sam ${params.prefix}_bowtie2_aligned.tsv ${params.prefix}_diamond_aligned.tsv ${params.prefix}_bowtie2_unaligned.fa ${params.prefix}_diamond_unaligned.fa)
+	files=(${params.prefix}_bowtie2_aligned.sam ${params.prefix}_bowtie2_aligned.tsv ${params.prefix}_diamond_aligned.tsv \
+	${params.prefix}_bowtie2_unaligned.fa ${params.prefix}_diamond_unaligned.fa)
+	
 	for i in {1..5}
 	do
 		if [ -f ${params.prefix}_humann2_temp/\${files[((\$i-1))]} ]
@@ -531,37 +409,11 @@ process profileFunction {
 	done
 	rm -rf ${params.prefix}_humann2_temp/
 
- 	#Measures and log execution time
- 	endtime=\$(date +%s.%N)
- 	exectime=\$(echo \"\$endtime \$starttime\" | awk '{print \$1-\$2}')
- 	sysdate=\$(date)
- 	echo \"\" >> .log.9
- 	echo \"STEP 3 (Community Characterisation) terminated at \$sysdate (\$exectime seconds)\" >> .log.9
- 	echo \" \" >> .log.9
- 	echo \"++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\" >> .log.9
- 	echo \"\" >> .log.9
  	"""
 }
 
 
-/**
-	CLEANUP 1. Collapses all the logs resulting from the QC in the main one, 
-	and removes them.
-*/
 
-process logQC {
-
-	input:
-	file(tolog)  from logQC.flatMap().mix(log2, log3, log5).toSortedList( { a, b -> a.name <=> b.name } )
-
-	when:
-	params.mode == "QC" || params.mode == "complete"
-
-	script:
-	"""
-	cat $tolog >> $mylog
-	"""
-}
 
 /**
 	CLEANUP 2. Saves the temporary files generate during QC (if the users requested so)
@@ -579,7 +431,7 @@ process saveQCtmpfile {
 	file "*.fq.gz"
 
 	when:
-	(params.mode == "QC" || params.mode == "complete") && params.keepQCtmpfile
+	params.keepQCtmpfile
 		
 	script:
 	"""
@@ -587,24 +439,7 @@ process saveQCtmpfile {
 	"""
 }
 
-/**
-	CLEANUP 3. Collapses all the logs resulting from the community characterisation steps
-	in the main one, and removes them.
-*/
 
-process logCC {
-
-	input:
-	file(tolog) from log7.mix(log8, log9).flatMap().toSortedList( { a, b -> a.name <=> b.name } )
-	
-	when:
-	params.mode == "characterisation" || params.mode == "complete"
-		
-	script:
-	"""
-	cat $tolog >> $mylog
-	"""
-}
 
 /**
 	CLEANUP 4. Saves the temporary files generate during the community characterisation 
@@ -623,7 +458,7 @@ process saveCCtmpfile {
 	file "$tmpfile"
 
 	when:
-	(params.mode == "characterisation" || params.mode == "complete") && params.keepCCtmpfile
+	params.keepCCtmpfile
 		
 	script:
 	"""
