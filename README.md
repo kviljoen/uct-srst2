@@ -1,13 +1,54 @@
-# Yet Another Metagenomic Pipeline (YAMP)
+# ![kviljoen/YAMP](/assets/cbio_logo.png)
 
-Thanks to the increased cost-effectiveness of high-throughput technologies, the number of studies focusing on microorganisms (bacteria, archaea, microbial eukaryotes, fungi, and viruses) and on their connections with human health and diseases has surged, and, consequently, a plethora of approaches and software has been made available for their study, making it difficult to select the best methods and tools. 
+# Reference-based WGS metagenomics pipeline, adapted from Yet Another Metagenomic Pipeline (YAMP), implemented in Nextflow
 
-Here we present Yet Another Metagenomic Pipeline (YAMP) that, starting from the raw sequencing data and having a strong focus on quality control, allows, within hours, the data processing up to the functional annotation (please refer to the YAMP [wiki](https://github.com/alesssia/YAMP/wiki) for more information).
+A reference-based WGS metagenomics pipeline using the Nextflow workflow manager. This pipeline accepts raw reads in .fastq format, performs quality filtering, adapter removal and decontamination, followed by taxonomic profiling with MetaPhlAn2, and functional profiling with HUMAnN2. This pipeline was adapted from https://github.com/alesssia/YAMP for implementation on the University of Cape Town (UCT) high-performance compute cluster.
 
-YAMP is constructed on [Nextflow](https://github.com/nextflow-io/nextflow), a framework based on the dataflow programming model, which allows writing workflows that are highly parallel, easily portable (including on distributed systems), and very flexible and customisable, characteristics which have been inherited by YAMP. New modules can be added easily and the existing ones can be customised -- even though we have already provided default parameters deriving from our own experience.
+## Basic usage:
 
-YAMP is accompanied by a [Docker container](https://www.docker.com/), that saves the users from the hassle of installing the required software, increasing, at the same time, the reproducibility of the YAMP results (see [Using Docker or Singularity](#using-docker-or-singularity)). 
+    The typical command for running the pipeline is as follows:
+    nextflow run uct-cbio/uct-yamp --reads '*_R{1,2}.fastq.gz' -profile uct_hex
+    Mandatory arguments:
+      --reads                       Path to input data (must be surrounded with quotes)
+      -profile                      Hardware config to use. uct_hex OR standard
+    Options:
+      --singleEnd                   Specifies that the input is single end reads
+    References:                     If not specified in the configuration file or you wish to overwrite any of the references.
+    Trimming options
+    Other options:
+      --outdir                      The output directory where the results will be saved
+      --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run 					  sent to you when the workflow exits
+      --clusterOptions              Extra SLURM options, used in conjunction with Uppmax.config
+      -name                         Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.  
+     Help:
+      --help                        Will print out summary above when executing nextflow run uct-cbio/16S-rDNA-dada2-pipeline                                     --help
 
+## Prerequisites
+
+Nextflow (0.26.x or higher), all other software/tools required are contained in the (platform-independent) dockerfile, which is converted to a singularity image for use on a cluster environment.
+
+## Documentation
+The uct-cbio/uct-yamp pipeline comes with documentation about the pipeline, found in the `docs/` directory:
+
+1. [Installation](docs/installation.md)
+2. [Running the pipeline](docs/usage.md)
+
+## Built With
+
+* [Nextflow](https://www.nextflow.io/)
+* [Docker](https://www.docker.com/what-docker)
+* [Singularity](https://singularity.lbl.gov/)
+
+
+## Credits
+
+The YAMP pipeline was built by Dr Alessia Visconti (https://github.com/alesssia/YAMP). Please remember to cite Dr Visconti  
+> Visconti A,. Martin T.C., and Falchi M., *"YAMP: a containerised workflow enabling reproducibility in metagenomics research"*, GigaScience (2018), [https://doi.org/10.1093/gigascience/giy072](https://doi.org/10.1093/gigascience/giy072)
+when using this pipeline. Further development to the Nextflow workflow and containerisation in Docker and Singularity for implementation specifically on UCT's HPC was done by Dr Katie Lennard, with Nextflow template inspiration and code snippets from Phil Ewels http://nf-co.re/
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
 
 
 ## Table of contents
@@ -22,13 +63,6 @@ YAMP is accompanied by a [Docker container](https://www.docker.com/), that saves
 - [Changelog](#changelog)
 - [License](#license)
 - [Acknowledgements](#acknowledgements)
-
-
-## Citation
-
-Please cite YAMP as:
-
-> Visconti A,. Martin T.C., and Falchi M., *"YAMP: a containerised workflow enabling reproducibility in metagenomics research"*, GigaScience (2018), [https://doi.org/10.1093/gigascience/giy072](https://doi.org/10.1093/gigascience/giy072)
 
 
 ## Dependencies
@@ -175,33 +209,6 @@ Enhancements:
 Fixes:
 * Solved problem in loading data when using single library layout
 * Solved problem in loading data in 'characterisation` mode
-
-
-
-### 0.9.4 / 2017-12-07
-
-Enhancements:
-* Improved logs
-* Version and help message printed upon request
-
-
-### 0.9.3.1 / 2017-10-04
-
-Enhancements:
-* Users no longer need to specify the number of threads and the maximum amount of memory -- both values are now read from the `nextflow.config` file
-
-
-### 0.9.3 / 2017-08-30
- 
- Enhancements:
- * YAMP can now handle both paired-end and single-end reads
- * The de-duplication step is now optional and can be skip (default: true)
- 
-
-### 0.9.2 / 2017-07-10 
-
-Enhancements:
-* YAMP can now be run in three *"modes"* : < QC, characterisation, complete >.
 
 
 ## License
