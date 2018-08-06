@@ -97,6 +97,15 @@ If you are working on a cluster environment you will likely have to convert the 
 ```
 docker run -v /var/run/docker.sock:/var/run/docker.sock -v /home/katie/h3abionet16S/singularity-containers/:/output --privileged -t --rm singularityware/docker2singularity d02667d8d22e
 ```
+Where `/home/katie/h3abionet16S/singularity-containers/` is the location where you want to save your singularity image and `d02667d8d22e` is the docker image ID obtained via `docker images` command
+
+Next, test the singularity image:
+
+```
+singularity exec /scratch/DB/bio/singularity-containers/d02667d8d22e-2018-07-23-251e39cb1b13.img /bin/bash
+```
+
+Where `d02667d8d22e-2018-07-23-251e39cb1b13.img` is your singularity image. You are now in the singularity image environment and can test whether all software was successfully installed e.g. humann2 --help should print the relevant helpfile.
 
 ## 5) Optional manual setup
 If you do not want to use the (recommended) containerised version of YAMP, you will need to install several additional tools for YAMP to work properly, and all of them should either be in the system path with execute and read permission, or made available within a multi-image scenario as the one we describe in the [multi-image scenario tutorial](https://github.com/alesssia/YAMP/wiki/multi-image-scenario).
