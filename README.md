@@ -1,6 +1,6 @@
 # ![kviljoen/YAMP](/assets/cbio_logo.png)
 
-# Reference-based WGS metagenomics pipeline, adapted from Yet Another Metagenomic Pipeline (YAMP), implemented in Nextflow
+# UCT-YAMP: A reference-based WGS metagenomics pipeline, adapted from Yet Another Metagenomic Pipeline (YAMP), implemented in Nextflow
 
 A reference-based WGS metagenomics pipeline using the Nextflow workflow manager. This pipeline accepts raw reads in .fastq format, performs quality filtering, adapter removal and decontamination, followed by taxonomic profiling with MetaPhlAn2, and functional profiling with HUMAnN2. This pipeline was adapted from https://github.com/alesssia/YAMP for implementation on the University of Cape Town (UCT) high-performance compute cluster.
 
