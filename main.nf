@@ -287,7 +287,7 @@ process runMultiQC_postfilterandtrim {
 process decontaminate {
 	tag{ "decon" }
 	
-	publishDir  workingdir, mode: 'move', pattern: "*_clean.fq.gz", overwrite: false
+	publishDir  "${params.outdir}/decontaminate", mode: 'move', pattern: "*_clean.fq.gz", overwrite: false
 		
 	input:
 	set val(pairId), file(infile1), file(infile2), file(infile12) from todecontaminate
@@ -324,7 +324,7 @@ process decontaminate {
 process metaphlan2 {
 	tag{ "metaphlan2" }
 	
-	publishDir  workingdir, mode: 'copy', pattern: "*.{biom,tsv}", overwrite: false
+	publishDir  "${params.outdir}/metaphlan2", mode: 'copy', pattern: "*.{biom,tsv}", overwrite: false
 	
 	input:
 	file(infile) from cleanreadstometaphlan2
@@ -361,7 +361,7 @@ process metaphlan2 {
 
 process humann2 {
 
-	publishDir  workingdir, mode: 'copy', pattern: "*.{tsv,log}", overwrite: false
+	publishDir  "${params.outdir}/humann2", mode: 'copy', pattern: "*.{tsv,log}", overwrite: false
 	
 	input:
 	set val(pairId), file(cleanreads) from cleanreadstohumann2
@@ -420,7 +420,7 @@ process humann2 {
 	
 process saveQCtmpfile {
 
-	publishDir  workingdir, mode: 'copy'
+	publishDir  "${params.outdir}/QCtmpfiles", mode: 'copy'
 		
 	input:
 	file (tmpfile) from topublishdedupe.mix(topublishtrim, topublishdecontaminate).flatMap()
@@ -445,7 +445,7 @@ process saveQCtmpfile {
 	
 process saveCCtmpfile {
 
-	publishDir  workingdir, mode: 'copy'
+	publishDir  "${params.outdir}/CCtmpfiles", mode: 'copy'
 		
 	input:
 	file (tmpfile) from topublishprofiletaxa.mix(topublishhumann2).flatMap()
