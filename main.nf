@@ -29,8 +29,24 @@ def helpMessage() {
       --singleEnd                   Specifies that the input is single end reads
     References                      If not specified in the configuration file or you wish to overwrite any of the references.
 
-    Trimming options
+    BBduk trimming options:
+      --qin			    Input quality offset: 33 (ASCII+33) or 64 (ASCII+64, default=33
+      --kcontaminants		    Kmer length used for finding contaminants, default=23	
+      --phred			    Regions with average quality BELOW this will be trimmed, default=10 
+      --minlength		    Reads shorter than this after trimming will be discarded, default=60
+      --mink			    Shorter kmers at read tips to look for, default=11 
+      --hdist			    Maximum Hamming distance for ref kmers, default=1            
+
+    BBwrap parameters for decontamination:	
+  mind = 0.95 //Approximate minimum alignment identity to look for
+  maxindel = 3 //longest indel to look for
+  bwr=0.16 //restrict alignment band to this
+	
+  //MetaPhlAn2 parameters 
+  bt2options="very-sensitive" //presets options for BowTie2
     Other options:
+      --keepQCtmpfile		    Whether the temporary files resulting from QC steps should be kept, default=false
+      --keepCCtmpfile		    Whether the temporary files resulting from MetaPhlAn2 and HUMAnN2 should be kept, default=false 
       --outdir                      The output directory where the results will be saved
       --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
       --clusterOptions              Extra SLURM options, used in conjunction with Uppmax.config
