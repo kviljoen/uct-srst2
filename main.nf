@@ -177,7 +177,7 @@ process dedup {
 	tag{ "dedup" }
 	
 	input:
-	set val(pairId), file(R1), file(R2) from ReadPairsToQual
+	set val(pairId), file(R1), file(R2) from ReadPairs
 
 	output:
 	set val(pairId), file("${pairId}_dedupe*.fq") into totrim, topublishdedupe
