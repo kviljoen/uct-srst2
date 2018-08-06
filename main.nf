@@ -25,10 +25,7 @@ def helpMessage() {
     Mandatory arguments:
       --reads                       Path to input data (must be surrounded with quotes)
       -profile                      Hardware config to use. uct_hex OR standard
-    Options:
-      --singleEnd                   Specifies that the input is single end reads
-    References                      If not specified in the configuration file or you wish to overwrite any of the references.
-
+      
     BBduk trimming options:
       --qin			    Input quality offset: 33 (ASCII+33) or 64 (ASCII+64, default=33
       --kcontaminants		    Kmer length used for finding contaminants, default=23	
@@ -38,18 +35,18 @@ def helpMessage() {
       --hdist			    Maximum Hamming distance for ref kmers, default=1            
 
     BBwrap parameters for decontamination:	
-  mind = 0.95 //Approximate minimum alignment identity to look for
-  maxindel = 3 //longest indel to look for
-  bwr=0.16 //restrict alignment band to this
+      --mind			   Approximate minimum alignment identity to look for, default=0.95
+      --maxindel		   Longest indel to look for, default=3
+      --bwr			   Restrict alignment band to this, default=0.16
 	
-  //MetaPhlAn2 parameters 
-  bt2options="very-sensitive" //presets options for BowTie2
+    MetaPhlAn2 parameters: 
+      --bt2options 		   Presets options for BowTie2, default="very-sensitive"
+      
     Other options:
       --keepQCtmpfile		    Whether the temporary files resulting from QC steps should be kept, default=false
       --keepCCtmpfile		    Whether the temporary files resulting from MetaPhlAn2 and HUMAnN2 should be kept, default=false 
       --outdir                      The output directory where the results will be saved
       --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
-      --clusterOptions              Extra SLURM options, used in conjunction with Uppmax.config
       -name                         Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.
     """.stripIndent()
 }
