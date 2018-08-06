@@ -48,6 +48,9 @@ def helpMessage() {
       --outdir                      The output directory where the results will be saved
       --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
       -name                         Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.
+      
+     Help:
+      --help                        Will print out summary above when executing nextflow run uct-cbio/uct-yamp --help                                    
     """.stripIndent()
 }
 	
@@ -57,7 +60,7 @@ def helpMessage() {
 
 // Configurable variables
 params.name = false
-params.project = false
+//params.project = false
 params.email = false
 params.plaintext_email = false
 
@@ -77,7 +80,6 @@ if (params.help){
 if (params.qin != 33 && params.qin != 64) {  
 	exit 1, "Input quality offset (qin) not available. Choose either 33 (ASCII+33) or 64 (ASCII+64)" 
 }   
-
 
 // Has the run name been specified by the user?
 //  this has the bonus effect of catching both -name and --name
