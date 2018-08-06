@@ -203,7 +203,7 @@ process bbduk {
 	tag{ "bbduk" }
 	
 	input:
-   	set val(pairId), file(R1_deduped), file(R2_deduped) from totrim
+   	set val(pairId), file("${pairId}_dedupe_R1.fq"), file("${pairId}_dedupe_R2.fq") from totrim
 	file(adapters) from Channel.from( file(params.adapters) )
 	file(artifacts) from Channel.from( file(params.artifacts) )
 	file(phix174ill) from Channel.from( file(params.phix174ill) )
@@ -216,7 +216,7 @@ process bbduk {
 	maxmem=\$(echo ${task.memory} | sed 's/ //g' | sed 's/B//g')
 
 	#Quality and adapter trim:
-	bbduk.sh -Xmx\"\$maxmem\" in=$R1_deduped in2=$R2_deduped out=${pairId}_trimmed_R1_tmp.fq \
+	bbduk.sh -Xmx\"\$maxmem\" in=${pairId}_dedupe_R1.fq in2=${pairId}_dedupe_R2.fq out=${pairId}_trimmed_R1_tmp.fq \
 	out2=${pairId}_trimmed_R2_tmp.fq outs=${pairId}_trimmed_singletons_tmp.fq ktrim=r \
 	k=$params.kcontaminants mink=$params.mink hdist=$params.hdist qtrim=rl trimq=$params.phred \
 	minlength=$params.minlength ref=$adapters qin=$params.qin threads=${task.cpus} tbo tpe 
