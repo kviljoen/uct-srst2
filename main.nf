@@ -93,8 +93,6 @@ Channel
     .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
     .into { ReadPairsToQual; ReadPairs }
 
-refFile = file(params.reference)
-
 // Header log info
 log.info "==================================="
 log.info " uct-cbio/uct-yamp  ~  version ${params.version}"
