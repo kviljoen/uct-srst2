@@ -216,18 +216,18 @@ process bbduk {
 	maxmem=\$(echo ${task.memory} | sed 's/ //g' | sed 's/B//g')
 
 	#Quality and adapter trim:
-	bbduk.sh -Xmx${maxmem} in=$reads1 in2=$reads2 out=${pairId}_trimmed_R1_tmp.fq \
+	bbduk.sh -Xmx\"\$maxmem\" in=$reads1 in2=$reads2 out=${pairId}_trimmed_R1_tmp.fq \
 	out2=${pairId}_trimmed_R2_tmp.fq outs=${pairId}_trimmed_singletons_tmp.fq ktrim=r \
 	k=$params.kcontaminants mink=$params.mink hdist=$params.hdist qtrim=rl trimq=$params.phred \
 	minlength=$params.minlength ref=$adapters qin=$params.qin threads=${task.cpus} tbo tpe 
 	
 	#Synthetic contaminants trim:
-	bbduk.sh -Xmx${maxmem} in=${pairId}_trimmed_R1_tmp.fq in2=${pairId}_trimmed_R2_tmp.fq \
+	bbduk.sh -Xmx\"\$maxmem\" in=${pairId}_trimmed_R1_tmp.fq in2=${pairId}_trimmed_R2_tmp.fq \
 	out=${pairId}_trimmed_R1.fq out2=${pairId}_trimmed_R2.fq k=31 ref=$phix174ill,$artifacts \
 	qin=$params.qin threads=${task.cpus} 
 
 	#Synthetic contaminants trim for singleton reads:
-	bbduk.sh -Xmx${maxmem} in=${pairId}_trimmed_singletons_tmp.fq out=${pairId}_trimmed_singletons.fq \
+	bbduk.sh -Xmx\"\$maxmem\" in=${pairId}_trimmed_singletons_tmp.fq out=${pairId}_trimmed_singletons.fq \
 	k=31 ref=$phix174ill,$artifacts qin=$params.qin threads=${task.cpus}
 
 	#Removes tmp files. This avoids adding them to the output channels
@@ -302,7 +302,7 @@ process decontaminate {
 	maxmem=\$(echo ${task.memory} | sed 's/ //g' | sed 's/B//g')
 	
 	#Decontaminate from foreign genomes
-	bbwrap.sh  -Xmx${maxmem} mapper=bbmap append=t in1=$infile1,$infile12 in2=$infile2, null \
+	bbwrap.sh  -Xmx\"\$maxmem\" mapper=bbmap append=t in1=$infile1,$infile12 in2=$infile2, null \
 	outu=${pairId}_clean.fq outm=${pairId}_cont.fq minid=$params.mind \
 	maxindel=$params.maxindel bwr=$params.bwr bw=12 minhits=2 qtrim=rl trimq=$params.phred \
 	path=$refForeingGenome qin=$params.qin threads=${task.cpus} untrim quickmatch fast
