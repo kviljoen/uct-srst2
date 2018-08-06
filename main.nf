@@ -180,7 +180,7 @@ process dedup {
 	set val(pairId), file(reads) from ReadPairs
 
 	output:
-	set val(pairId), file("${pairId}_dedupe*.fq") into totrim, topublishdedupe
+	set val(pairId), file("${pairId}_dedupe_R1.fq"), file("${pairId}_dedupe_R2.fq") into totrim, topublishdedupe
 
 	script:
 	"""
