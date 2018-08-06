@@ -216,7 +216,7 @@ process bbduk {
 	maxmem=\$(echo ${task.memory} | sed 's/ //g' | sed 's/B//g')
 
 	#Quality and adapter trim:
-	bbduk.sh -Xmx\"\$maxmem\" in=$reads1 in2=$reads2 out=${pairId}_trimmed_R1_tmp.fq \
+	bbduk.sh -Xmx\"\$maxmem\" in=$R1_deduped in2=$R2_deduped out=${pairId}_trimmed_R1_tmp.fq \
 	out2=${pairId}_trimmed_R2_tmp.fq outs=${pairId}_trimmed_singletons_tmp.fq ktrim=r \
 	k=$params.kcontaminants mink=$params.mink hdist=$params.hdist qtrim=rl trimq=$params.phred \
 	minlength=$params.minlength ref=$adapters qin=$params.qin threads=${task.cpus} tbo tpe 
