@@ -248,7 +248,7 @@ process runFastQC_postfilterandtrim {
     publishDir "${params.outdir}/FastQC_post_filter_trim", mode: "copy", overwrite: false
 
     input:
-    	set val(pairId), file(filtFor), file(filtRev) from filteredReadsforQC
+    	set val(pairId), file("${pairId}_trimmed_R1.fq"), file("${pairId}_trimmed_R2.fq") from filteredReadsforQC
 
     output:
         file("${pairId}_fastqc_postfiltertrim/*.zip") into fastqc_files_2
@@ -256,8 +256,8 @@ process runFastQC_postfilterandtrim {
     """
     mkdir ${pairId}_fastqc_postfiltertrim
     fastqc --outdir ${pairId}_fastqc_postfiltertrim \
-    ${filtFor} \
-    ${filtRev}
+    ${pairId}_trimmed_R1.fq \
+    ${pairId}_trimmed_R2.fq
     """
 }
 
@@ -288,13 +288,13 @@ process decontaminate {
 	publishDir  "${params.outdir}/decontaminate", mode: 'move', pattern: "*_clean.fq.gz", overwrite: false
 		
 	input:
-	set val(pairId), file(infile1), file(infile2), file(infile12) from todecontaminate
+	set val(pairId), file("${pairId}_trimmed_R1.fq"), file("${pairId}_trimmed_R2.fq"), file("${pairId}_trimmed_singletons.fq") from todecontaminate
 	file(refForeingGenome) from Channel.from( file(params.refForeingGenome, type: 'dir') )
 	
 	output:
 	file "*_clean.fq.gz"
-	file "${pairId}_clean.fq" into cleanreadstometaphlan2, cleanreadstohumann2, topublishdecontaminate
-
+	file "${pairId}_clean.fq" into cleanreadstometaphlan2, cleanreadstohumann2 
+	file "${pairId}_cont.fq" into topublishdecontaminate
 	
 	script:
 	"""
@@ -302,7 +302,7 @@ process decontaminate {
 	maxmem=\$(echo ${task.memory} | sed 's/ //g' | sed 's/B//g')
 	
 	#Decontaminate from foreign genomes
-	bbwrap.sh  -Xmx\"\$maxmem\" mapper=bbmap append=t in1=$infile1,$infile12 in2=$infile2, null \
+	bbwrap.sh  -Xmx\"\$maxmem\" mapper=bbmap append=t in1=${pairId}_trimmed_R1.fq,${pairId}_trimmed_singletons.fq in2=${pairId}_trimmed_R2.fq, null \
 	outu=${pairId}_clean.fq outm=${pairId}_cont.fq minid=$params.mind \
 	maxindel=$params.maxindel bwr=$params.bwr bw=12 minhits=2 qtrim=rl trimq=$params.phred \
 	path=$refForeingGenome qin=$params.qin threads=${task.cpus} untrim quickmatch fast
