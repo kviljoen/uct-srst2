@@ -245,7 +245,7 @@ process bbduk {
 
 process runFastQC_postfilterandtrim {
     tag { "rFQC_post_FT.${pairId}" }
-    publishDir "${params.outdir}/FastQC_post_filter_trim", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/FastQC_post_filter_trim", mode: "copy", overwrite: true
 
     input:
     	set val(pairId), file("${pairId}_trimmed_R1.fq"), file("${pairId}_trimmed_R2.fq") from filteredReadsforQC
