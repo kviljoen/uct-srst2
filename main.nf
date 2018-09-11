@@ -204,15 +204,15 @@ process bbduk {
 	publishDir "${params.outdir}/filtered_trimmed", mode: "copy", overwrite: false
 	
 	input:
-   	val(pairId), file("${pairId}_dedupe_R1.fq"), file("${pairId}_dedupe_R2.fq") from totrim
+   	set val(pairId), file "*_dedupe_R1.fq", file "*_dedupe_R2.fq" from totrim
 	file(adapters) from Channel.from( file(params.adapters) )
 	file(artifacts) from Channel.from( file(params.artifacts) )
 	file(phix174ill) from Channel.from( file(params.phix174ill) )
 
 	output:
-	val(pairId), file("${pairId}_pass_trimmed*.fq") into todecontaminate, topublishtrim
-	val(pairId), file("${pairId}_pass_trimmed_R1.fq"), file("${pairId}_pass_trimmed_R2.fq") into filteredReadsforQC
-   	
+	set val(pairId), file "*_pass_trimmed*.fq" into todecontaminate, topublishtrim
+	set val(pairId), file "*_pass_trimmed_R1.fq", "*_pass_trimmed_R2.fq" into filteredReadsforQC
+	
 	script:
 	"""	
 	#mkdir ${params.outdir}/filtered_trimmed
@@ -251,7 +251,7 @@ process runFastQC_postfilterandtrim {
     publishDir "${params.outdir}/FastQC_post_filter_trim", mode: "copy", overwrite: true
 
     input:
-    	val(pairId), file("${pairId}_pass_trimmed_R1.fq"), file("${pairId}_pass_trimmed_R2.fq") from filteredReadsforQC
+    	set val(pairId), file "*_pass_trimmed_R1.fq", "*_pass_trimmed_R2.fq" from filteredReadsforQC
 
     output:
         file("${pairId}_fastqc_postfiltertrim/*.zip") into fastqc_files_2
@@ -259,8 +259,8 @@ process runFastQC_postfilterandtrim {
     """
     mkdir ${pairId}_fastqc_postfiltertrim
     fastqc --outdir ${pairId}_fastqc_postfiltertrim \
-    ${pairId}_trimmed_R1.fq \
-    ${pairId}_trimmed_R2.fq
+    ${pairId}_pass_trimmed_R1.fq \
+    ${pairId}_pass_trimmed_R2.fq
     """
 }
 
