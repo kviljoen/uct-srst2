@@ -180,7 +180,7 @@ process dedup {
 	set val(pairId), file(reads) from ReadPairs
 
 	output:
-	set val(pairId), file("${pairId}_dedupe_R1.fq"), file("${pairId}_dedupe_R2.fq") into totrim, topublishdedupe
+	val(pairId), file("${pairId}_dedupe_R1.fq"), file("${pairId}_dedupe_R2.fq") into totrim, topublishdedupe
 
 	script:
 	"""
@@ -204,14 +204,14 @@ process bbduk {
 	publishDir "${params.outdir}/filtered_trimmed", mode: "copy", overwrite: false
 	
 	input:
-   	set val(pairId), file("${pairId}_dedupe_R1.fq"), file("${pairId}_dedupe_R2.fq") from totrim
+   	val(pairId), file("${pairId}_dedupe_R1.fq"), file("${pairId}_dedupe_R2.fq") from totrim
 	file(adapters) from Channel.from( file(params.adapters) )
 	file(artifacts) from Channel.from( file(params.artifacts) )
 	file(phix174ill) from Channel.from( file(params.phix174ill) )
 
 	output:
-	set val(pairId), file("${pairId}_pass_trimmed*.fq") into todecontaminate, topublishtrim
-	file("${pairId}_pass_trimmed_R1.fq"), file("${pairId}_pass_trimmed_R2.fq") into filteredReadsforQC
+	val(pairId), file("${pairId}_pass_trimmed*.fq") into todecontaminate, topublishtrim
+	val(pairId), file("${pairId}_pass_trimmed_R1.fq"), file("${pairId}_pass_trimmed_R2.fq") into filteredReadsforQC
    	
 	script:
 	"""	
@@ -251,7 +251,7 @@ process runFastQC_postfilterandtrim {
     publishDir "${params.outdir}/FastQC_post_filter_trim", mode: "copy", overwrite: true
 
     input:
-    	set val(pairId), file("${pairId}_pass_trimmed_R1.fq"), file("${pairId}_pass_trimmed_R2.fq") from filteredReadsforQC
+    	val(pairId), file("${pairId}_pass_trimmed_R1.fq"), file("${pairId}_pass_trimmed_R2.fq") from filteredReadsforQC
 
     output:
         file("${pairId}_fastqc_postfiltertrim/*.zip") into fastqc_files_2
