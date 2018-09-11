@@ -215,7 +215,7 @@ process bbduk {
    	
 	script:
 	"""	
-	mkdir ${params.outdir}/filtered_trimmed
+	#mkdir ${params.outdir}/filtered_trimmed
 	maxmem=\$(echo ${task.memory} | sed 's/ //g' | sed 's/B//g')
 
 	#Quality and adapter trim:
