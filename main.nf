@@ -210,7 +210,7 @@ process bbduk {
 	file(phix174ill) from Channel.from( file(params.phix174ill) )
 
 	output:
-	set val(pairId), file("${pairId}_pass_trimmed*.fq") into todecontaminate, topublishtrim
+	set val(pairId), file("${pairId}_trimmed*.fq") into todecontaminate, topublishtrim
 	file("${pairId}_trimmed_R*.fq") into filteredReadsforQC
    	
 	script:
