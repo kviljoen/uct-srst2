@@ -210,8 +210,8 @@ process bbduk {
 	file(phix174ill) from Channel.from( file(params.phix174ill) )
 
 	output:
-	set val(pairId), file("${pairId}_trimmed*.fq") into todecontaminate, topublishtrim
-	file("${pairId}_trimmed_R*.fq") into filteredReadsforQC
+	set val(pairId), file("${pairId}_pass_trimmed*.fq") into todecontaminate, topublishtrim
+	file("${pairId}_pass_trimmed_R1.fq"), file("${pairId}_pass_trimmed_R2.fq") into filteredReadsforQC
    	
 	script:
 	"""	
@@ -251,7 +251,7 @@ process runFastQC_postfilterandtrim {
     publishDir "${params.outdir}/FastQC_post_filter_trim", mode: "copy", overwrite: true
 
     input:
-    	set val(pairId), file("${pairId}_trimmed_R1.fq"), file("${pairId}_trimmed_R2.fq") from filteredReadsforQC
+    	set val(pairId), file("${pairId}_pass_trimmed_R1.fq"), file("${pairId}_pass_trimmed_R2.fq") from filteredReadsforQC
 
     output:
         file("${pairId}_fastqc_postfiltertrim/*.zip") into fastqc_files_2
