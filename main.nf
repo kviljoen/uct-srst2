@@ -201,6 +201,7 @@ process dedup {
 
 process bbduk {
 	tag{ "bbduk" }
+	publishDir "${params.outdir}/filtered_trimmed", mode: "copy", overwrite: false
 	
 	input:
    	set val(pairId), file("${pairId}_dedupe_R1.fq"), file("${pairId}_dedupe_R2.fq") from totrim
@@ -213,6 +214,7 @@ process bbduk {
 
    	script:
 	"""	
+	mkdir ${params.outdir}/filtered_trimmed
 	maxmem=\$(echo ${task.memory} | sed 's/ //g' | sed 's/B//g')
 
 	#Quality and adapter trim:
