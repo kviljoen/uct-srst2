@@ -289,7 +289,7 @@ process runMultiQC_postfilterandtrim {
 process decontaminate {
 	tag{ "decon" }
 	
-	publishDir  "${params.outdir}/decontaminate", mode: 'move', pattern: "*_clean.fq.gz", overwrite: false
+	publishDir  "${params.outdir}/decontaminate", mode: 'move', pattern: "*_clean.fq.gz", overwrite: true
 		
 	input:
 	set val(pairId), file("${pairId}_trimmed_R1.fq"), file("${pairId}_trimmed_R2.fq"), file("${pairId}_trimmed_singletons.fq") from todecontaminate
