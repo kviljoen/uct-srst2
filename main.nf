@@ -289,7 +289,7 @@ process decontaminate {
 	publishDir  "${params.outdir}/decontaminate", mode: 'move', pattern: "*_clean.fq.gz", overwrite: false
 		
 	input:
-	set val(pairId), file("${pairId}_trimmed*.fq" from todecontaminate
+	set val(pairId), file("${pairId}_trimmed*.fq") from todecontaminate
 	file(refForeingGenome) from Channel.from( file(params.refForeingGenome, type: 'dir') )
 	
 	output:
