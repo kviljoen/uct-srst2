@@ -175,7 +175,6 @@ process runMultiQC{
 
 process dedup {
 	tag{ "dedup" }
-	publishDir "${params.outdir}/dedup", mode: 'copy', overwrite: false
 
 	input:
 	set val(pairId), file(reads) from ReadPairs
@@ -185,7 +184,6 @@ process dedup {
 
 	script:
 	"""
-	#mkdir ${params.outdir}/dedup
 	maxmem=\$(echo ${task.memory} | sed 's/ //g' | sed 's/B//g')
 
 	clumpify.sh -Xmx\"\$maxmem\" in1="${reads[0]}" in2="${reads[1]}" out1=${pairId}_dedupe_R1.fq out2=${pairId}_dedupe_R2.fq \
@@ -216,7 +214,6 @@ process bbduk {
 
 	script:
 	"""	
-	#mkdir ${params.outdir}/filtered_trimmed
 	maxmem=\$(echo ${task.memory} | sed 's/ //g' | sed 's/B//g')
 
 	#Quality and adapter trim:
@@ -249,7 +246,7 @@ process bbduk {
 
 process runFastQC_postfilterandtrim {
     tag { "rFQC_post_FT.${pairId}" }
-    publishDir "${params.outdir}/FastQC_post_filter_trim", mode: "copy", overwrite: true
+    publishDir "${params.outdir}/FastQC_post_filter_trim", mode: "copy", overwrite: false
 
     input:
     	set val(pairId), file("${pairId}_trimmed_R1.fq"), file("${pairId}_trimmed_R2.fq") from filteredReadsforQC
@@ -289,7 +286,7 @@ process runMultiQC_postfilterandtrim {
 process decontaminate {
 	tag{ "decon" }
 	
-	publishDir  "${params.outdir}/decontaminate", mode: 'move', pattern: "*_clean.fq.gz", overwrite: true
+	publishDir  "${params.outdir}/decontaminate", mode: 'move', pattern: "*_clean.fq.gz", overwrite: false
 		
 	input:
 	set val(pairId), file("${pairId}_trimmed*.fq" from todecontaminate
