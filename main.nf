@@ -293,7 +293,7 @@ process decontaminate {
 	file(refForeingGenome) from Channel.from( file(params.refForeingGenome, type: 'dir') )
 	
 	output:
-	file "*_clean.fq.gz"
+	//file "*_clean.fq.gz"
 	file "${pairId}_clean.fq" into cleanreadstometaphlan2, cleanreadstohumann2 
 	file "${pairId}_cont.fq" into topublishdecontaminate
 	
@@ -308,7 +308,7 @@ process decontaminate {
 	maxindel=$params.maxindel bwr=$params.bwr bw=12 minhits=2 qtrim=rl trimq=$params.phred \
 	path=$refForeingGenome qin=$params.qin threads=${task.cpus} untrim quickmatch fast
 	
-	gzip -c ${pairId}_clean.fq > ${pairId}_clean.fq.gz
+	#gzip -c ${pairId}_clean.fq > ${pairId}_clean.fq.gz
 
 	"""
 }
