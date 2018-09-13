@@ -293,8 +293,8 @@ process decontaminate {
 	
 	output:
 	file "*_clean.fq.gz"
-	file "${pairId}_clean.fq" into cleanreadstometaphlan2, cleanreadstohumann2 
-	file "${pairId}_cont.fq" into topublishdecontaminate
+	set val(pairId), file("${pairId}_clean.fq") into cleanreadstometaphlan2, cleanreadstohumann2 
+	set val(pairId), file("${pairId}_cont.fq") into topublishdecontaminate
 	
 	script:
 	"""
@@ -325,19 +325,17 @@ process metaphlan2 {
 	publishDir  "${params.outdir}/metaphlan2", mode: 'copy', pattern: "*.{biom,tsv}", overwrite: false
 	
 	input:
-	file(infile) from cleanreadstometaphlan2
+	set val(pairId), file(infile) from cleanreadstometaphlan2
 	file(mpa_pkl) from Channel.from( file(params.mpa_pkl) )
 	file(bowtie2db) from Channel.fromPath( params.bowtie2db, type: 'dir' )
 
     output:
-	file "${pairId}.biom" into toalphadiversity
 	file "${pairId}_metaphlan_profile.tsv" into metaphlantohumann2
 	file "${pairId}_bt2out.txt" into topublishprofiletaxa
 
 
 	script:
 	"""
-	
 	#If a file with the same name is already present, Metaphlan2 will crash
 	rm -rf ${pairId}_bt2out.txt
 	
