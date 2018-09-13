@@ -285,15 +285,14 @@ process runMultiQC_postfilterandtrim {
 
 process decontaminate {
 	tag{ "decon" }
+	publishDir  workingdir, mode: 'move', pattern: "*_clean.fq.gz"
 	
-	publishDir  "${params.outdir}/decontaminate", mode: 'move', pattern: "*_clean.fq.gz", overwrite: false
-		
 	input:
 	set val(pairId), file("${pairId}_trimmed_R1.fq"), file("${pairId}_trimmed_R2.fq"), file("${pairId}_trimmed_singletons.fq") from todecontaminate
 	file(refForeingGenome) from Channel.from( file(params.refForeingGenome, type: 'dir') )
 	
 	output:
-	//file "*_clean.fq.gz"
+	file "*_clean.fq.gz"
 	file "${pairId}_clean.fq" into cleanreadstometaphlan2, cleanreadstohumann2 
 	file "${pairId}_cont.fq" into topublishdecontaminate
 	
@@ -308,7 +307,7 @@ process decontaminate {
 	maxindel=$params.maxindel bwr=$params.bwr bw=12 minhits=2 qtrim=rl trimq=$params.phred \
 	path=$refForeingGenome qin=$params.qin threads=${task.cpus} untrim quickmatch fast
 	
-	#gzip -c ${pairId}_clean.fq > ${pairId}_clean.fq.gz
+	gzip -c ${pairId}_clean.fq > ${pairId}_clean.fq.gz
 
 	"""
 }
