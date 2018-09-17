@@ -298,7 +298,7 @@ process decontaminate {
 	
 	script:
 	"""
-	
+	mkdir ${params.outdir}/decontaminate
 	maxmem=\$(echo ${task.memory} | sed 's/ //g' | sed 's/B//g')
 	
 	#Decontaminate from foreign genomes
