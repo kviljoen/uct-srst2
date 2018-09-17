@@ -340,7 +340,7 @@ process metaphlan2 {
 	
 	#Estimate taxon abundances
 	metaphlan2.py --input_type fastq --tmp_dir=. --biom ${pairId}.biom --bowtie2out=${pairId}_bt2out.txt \
-	--mpa_pkl $mpa_pkl  --bowtie2db $bowtie2db/$params.bowtie2dbfiles --bt2_ps $params.bt2options --nproc ${task.cpus} \
+	--mpa_pkl $mpa_pkl  --bowtie2db $bowtie2db/ --bt2_ps $params.bt2options --nproc ${task.cpus} \
 	$infile ${pairId}_metaphlan_profile.tsv
 	
 	#Sets the prefix in the biom file
