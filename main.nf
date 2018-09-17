@@ -302,7 +302,7 @@ process decontaminate {
 	maxmem=\$(echo ${task.memory} | sed 's/ //g' | sed 's/B//g')
 	
 	#Decontaminate from foreign genomes
-	bbwrap.sh  -Xmx\"\$maxmem\" mapper=bbmap append=t in1=${pairId}_trimmed_R1.fq,${pairId}_trimmed_singletons.fq in2=${pairId}_trimmed_R2.fq, null \
+	bbwrap.sh  -Xmx\"\$maxmem\" mapper=bbmap append=t in1=${pairId}_trimmed_R1.fq,${pairId}_trimmed_singletons.fq in2=${pairId}_trimmed_R2.fq,null \
 	outu=${pairId}_clean.fq outm=${pairId}_cont.fq minid=$params.mind \
 	maxindel=$params.maxindel bwr=$params.bwr bw=12 minhits=2 qtrim=rl trimq=$params.phred \
 	path=$refForeingGenome qin=$params.qin threads=${task.cpus} untrim quickmatch fast
