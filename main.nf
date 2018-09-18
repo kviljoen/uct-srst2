@@ -338,7 +338,7 @@ process metaphlan2 {
 	"""
 	#If a file with the same name is already present, Metaphlan2 will crash
 	rm -rf ${pairId}_bt2out.txt
-	mpa_dir="/scratch/DB/bio/YAMP/" #Set mpa_dir, since different to Metaphlan2 default
+	export mpa_dir "/scratch/DB/bio/YAMP/" #Set mpa_dir, since different to Metaphlan2 default
 	#Estimate taxon abundances
 	metaphlan2.py --input_type fastq --tmp_dir=. --biom ${pairId}.biom --bowtie2out=${pairId}_bt2out.txt \
 	--mpa_pkl $mpa_pkl  --bowtie2db $bowtie2db/ --bt2_ps $params.bt2options --nproc ${task.cpus} \
