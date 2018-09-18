@@ -42,6 +42,10 @@ A reference-based WGS metagenomics pipeline using the Nextflow workflow manager.
 
 Nextflow (0.26.x or higher), all other software/tools required are contained in the (platform-independent) dockerfile, which is converted to a singularity image for use on a cluster environment.
 
+There are however reference databases that need to be downloaded (only if you are NOT working on UCT hex), these are:
+1. Reference pan-genome for contamination (used by process decontaminate) can be downloaded from here: https://zenodo.org/record/1208052/files/hg19_main_mask_ribo_animal_allplant_allfungus.fa.gz
+2. BowTie2 database for MetaPhlAn2: The mpa_v20_m200.pkl can be downloaded from here https://bitbucket.org/biobakery/metaphlan2/downloads/ (mpa_v20_m200.tar file); the bowtie2 index files for metaphlan2 (which should be specified under "bowtie2db=" in the uct_hex.config file can be downloaded from here https://www.dropbox.com/sh/w4j4yr1b0o7xu9v/AAAx1yiV6enIGR7SuC8B34cKa?dl=0 Note that these index files can also be built from the fna file in the .tar in step 1. as outlined here https://groups.google.com/forum/#!topic/metaphlan-users/5ltD8X8Xitc
+
 ## Documentation
 The uct-cbio/uct-yamp pipeline comes with documentation about the pipeline, found in the `docs/` directory:
 
