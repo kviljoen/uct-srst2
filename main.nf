@@ -344,7 +344,7 @@ process metaphlan2 {
 	--mpa_pkl $mpa_pkl  --bowtie2db $bowtie2db/$params.bowtie2dbfiles --bt2_ps $params.bt2options --nproc ${task.cpus} \
 	$infile ${pairId}_metaphlan_profile.tsv
 	
-	#Sets the prefix in the biom file
+	#Sets the sample ID in the biom file
 	sed -i 's/Metaphlan2_Analysis/${pairId}/g' ${pairId}.biom
 	sed -i 's/Metaphlan2_Analysis/${pairId}/g' ${pairId}_metaphlan_profile.tsv
 	
@@ -389,19 +389,19 @@ process humann2 {
 	#according to the keepCCtmpfile parameter. Others (such as the bowties2 indexes), 
 	#are always removed. Those that should be moved, but have not been created by 
 	#HUMAnN2, are now created by the script (they are needed as output for the channel)
-	files=(${params.prefix}_bowtie2_aligned.sam ${params.prefix}_bowtie2_aligned.tsv ${params.prefix}_diamond_aligned.tsv \
-	${params.prefix}_bowtie2_unaligned.fa ${params.prefix}_diamond_unaligned.fa)
+	files=(${pairId}_bowtie2_aligned.sam ${pairId}_bowtie2_aligned.tsv ${pairId}_diamond_aligned.tsv \
+	${pairId}_bowtie2_unaligned.fa ${pairId}_diamond_unaligned.fa)
 	
 	for i in {1..5}
 	do
-		if [ -f ${params.prefix}_humann2_temp/\${files[((\$i-1))]} ]
+		if [ -f ${pairId}_humann2_temp/\${files[((\$i-1))]} ]
 		then
-			mv ${params.prefix}_humann2_temp/\${files[((\$i-1))]} .
+			mv ${pairId}_humann2_temp/\${files[((\$i-1))]} .
 		else
 			touch \${files[((\$i-1))]}
 		fi
 	done
-	rm -rf ${params.prefix}_humann2_temp/
+	rm -rf ${pairId}_humann2_temp/
 
  	"""
 }
