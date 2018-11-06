@@ -379,7 +379,7 @@ process humann2 {
 	#Functional annotation
 	humann2 --input $cleanreads --output . --output-basename ${pairId} \
 	--taxonomic-profile $humann2_profile --nucleotide-database $chocophlan --protein-database $uniref \
-	--pathways metacyc --threads ${task.cpus} --memory-use minimum
+	--pathways metacyc --threads ${task.cpus} --memory-use maximum
 
 	
 	#Performs functional annotation, redirect is done here because HUMAnN2 freaks out
