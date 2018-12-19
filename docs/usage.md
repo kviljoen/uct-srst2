@@ -69,14 +69,25 @@ Please note the following requirements:
 
 If left unspecified, a default pattern is used: `data/*{1,2}.fastq.gz`
 
-## Job Resources
+## Paths to external resources
+### Adapter sequences and synthetic contaminants to be removed in the trimming step
+Adapters are removed using the BBTools package, currently includes Illumina Truseq and Nextera adapters sequences in our singularity installation of /opt/conda/opt/bbmap-37.10/resources/adapters.fa. You can specify whether or not BBDuk looks for the reverse-complement of the reference sequences as well as the forward sequence with the flag “rcomp=t” or “rcomp=f”; by default it looks for both. You can also specify custom adapters if necessary (https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/bbduk-guide/)
+Also available in the /opt/conda/opt/bbmap-37.10/resources/ folder are sequencing_artifacts.fa.gz and phix174_ill.ref.fa.gz 
+
+### Reference pan-genome for decontamination
+A FASTA file describing the contaminating genome(s). This file should be created according to the contaminants present in your dataset. When analysing the human metagenome, include the human genome and specify the file path as `refForeingGenome` in the config file. Please note that this file should be indexed beforehand. This can be done using BBMap, using the following command: bbmap.sh -Xmx24G ref=my_contaminants_genomes.fa.gz. For the default UCT option (see conf/uct_hex.config) the human contaminants file was downloaded from https://zenodo.org/record/1208052/files/hg19_main_mask_ribo_animal_allplant_allfungus.fa.gz
+
+### BowTie2 database for MetaPhlAn2
+
+
+## Job resources
 ### Automatic resubmission
 Each step in the pipeline has a default set of requirements for number of CPUs, memory and time. For most of the steps in the pipeline, if the job exits with an error code of `143` (exceeded requested resources) it will automatically resubmit with higher requests (2 x original, then 3 x original). If it still fails after three times then the pipeline is stopped.
 
 ### Custom resource requests
 Wherever process-specific requirements are set in the pipeline, the default value can be changed by creating a custom config file. See the files in [`conf`](../conf) for an example.
 
-## General line parameters
+## General command line parameters
 ### `--outdir`
 The output directory where the results will be saved.
 
