@@ -17,7 +17,7 @@ vim: syntax=groovy
 def helpMessage() {
     log.info"""
     ===================================
-     uct-cbio/uct-yamp  ~  version ${params.version}
+     uct-yamp  ~  version ${params.version}
     ===================================
     Usage:
     The typical command for running the pipeline is as follows:
@@ -95,7 +95,7 @@ Channel
 
 // Header log info
 log.info "==================================="
-log.info " uct-cbio/uct-yamp  ~  version ${params.version}"
+log.info " uct-yamp  ~  version ${params.version}"
 log.info "==================================="
 def summary = [:]
 summary['Run Name']     = custom_runName ?: workflow.runName
