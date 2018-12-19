@@ -1,14 +1,16 @@
-# uct-cbio/uct-yamp Usage
+# uct-yamp usage
 
 ## General Nextflow info
-Nextflow handles job submissions on different environments (PBS in our case), and supervises running the jobs. Thus the Nextflow process must run until the pipeline is finished. We recommend that you put the process running in the background through `screen` / `tmux` or similar tool. Alternatively you can run nextflow within a cluster job submitted your job scheduler.
+Nextflow handles job submissions on different environments (PBS in our case), and supervises running the jobs. Thus the Nextflow process must run until the pipeline is finished. We recommend that you put the process running in the background through `screen` or a similar tool. 
 
-It is recommended to limit the Nextflow Java virtual machines memory. We recommend adding the following line to your environment (typically in `~/.bashrc` or `~./bash_profile`):
+On UCT's hex cluster you would start a screen session from the headnode and then start and interactive job. Once you are on a worker node you can enter the typical command for running the pipeline specified below.
+
+It is recommended that you limit the Nextflow Java virtual machine's memory usage by adding the following line to your environment (typically in `~/.bashrc` or `~./bash_profile`):
 
 ```bash
 NXF_OPTS='-Xms1g -Xmx4g'
 ```
-For University of Cape Town users who will be running Nextflow on UCT's HPC (hex), you need to include the following two lines in your `~/.bachrc`:
+For University of Cape Town users who will be running Nextflow on UCT's HPC (hex), you need to include the following two lines in your `~/.bashrc`:
 
 JAVA_CMD=/opt/exp_soft/java/jdk1.8.0_31/bin/java
 export PATH=$PATH:/opt/exp_soft/cbio/nextflow
@@ -25,7 +27,7 @@ Note that the pipeline will create the following files in your working directory
 
 ```bash
 work            # Directory containing the nextflow working files
-outdir         # Finished results (configurable, see below)
+outdir         # Final results (configurable, see below)
 .nextflow_log   # Log file from Nextflow
 # Other nextflow hidden files, eg. history of pipeline runs and old logs.
 ```
@@ -71,7 +73,7 @@ If left unspecified, a default pattern is used: `data/*{1,2}.fastq.gz`
 Each step in the pipeline has a default set of requirements for number of CPUs, memory and time. For most of the steps in the pipeline, if the job exits with an error code of `143` (exceeded requested resources) it will automatically resubmit with higher requests (2 x original, then 3 x original). If it still fails after three times then the pipeline is stopped.
 
 ### Custom resource requests
-Wherever process-specific requirements are set in the pipeline, the default value can be changed by creating a custom config file. See the files in [`conf`](../conf) for examples.
+Wherever process-specific requirements are set in the pipeline, the default value can be changed by creating a custom config file. See the files in [`conf`](../conf) for an example.
 
 ## General line parameters
 ### `--outdir`
@@ -107,7 +109,7 @@ process.$fastqc.errorStrategy = 'terminate'
 
 ### `--max_memory`
 Use to set a top-limit for the default memory requirement for each process.
-Should be a string in the format integer-unit. eg. `--max_memory '8.GB'``
+Should be a string in the format integer-unit. eg. `--max_memory '8.GB'`
 
 ### `--max_time`
 Use to set a top-limit for the default time requirement for each process.
