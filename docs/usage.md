@@ -1,3 +1,4 @@
+# ![kviljoen/YAMP](/assets/cbio_logo.png)
 # uct-yamp usage
 
 ## General Nextflow info
@@ -123,8 +124,4 @@ Should be a string in the format integer-unit. eg. `--max_cpus 1`
 Set to receive plain-text e-mails instead of HTML formatted.
 
 
----
 
-[![UCT CBIO](/assets/cbio_logo.png)](http://www.cbio.uct.ac.za/)
-
----
