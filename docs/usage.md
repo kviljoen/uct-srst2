@@ -125,6 +125,6 @@ Set to receive plain-text e-mails instead of HTML formatted.
 
 ---
 
-[![UCT CBIO](/conf/cbio_logo.png)](http://www.cbio.uct.ac.za/)
+[![UCT CBIO](/assets/cbio_logo.png)](http://www.cbio.uct.ac.za/)
 
 ---
