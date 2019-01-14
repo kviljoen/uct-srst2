@@ -1,6 +1,6 @@
-# uct-cbio/uct-yamp Installation
+# uct-yamp Installation
 
-To start using the uct-cbio/uct-yamp, follow the steps below:
+To start using the uct-yamp, follow the steps below:
 
 1. [Install Nextflow](#install-nextflow)
 2. [Install the pipeline](#install-the-pipeline)
@@ -56,9 +56,9 @@ nextflow run /my-pipelines/uct-yamp
 YAMP requires a set of databases that are queried during its execution. Some of them should be automatically downloaded when installing the tools listed in the dependencies (or using specialised scripts, as those available with HUMAnN2), whilst other should be created by the user. Specifically, you will need:
 
 - a FASTA file listing the adapter sequences to remove in the trimming step. This file should be available within the BBmap installation. If not, please download it from [here](https://github.com/BioInfoTools/BBMap/blob/master/resources/adapters.fa);
-- two FASTA file describing synthetic contaminants. These files (`sequencing_artifacts.fa.gz` and `phix174_ill.ref.fa.gz`) should be available within the BBmap installation. If not, please download them from [here](https://sourceforge.net/projects/bbmap/);
-- a FASTA file describing the contaminating genome(s). This file should be created by the users according to the contaminants present in their dataset. When analysing human metagenome, we suggest the users to always include the human genome. Please note that this file should be indexed beforehand. This can be done using BBMap, using the following command: `bbmap.sh -Xmx24G ref=my_contaminants_genomes.fa.gz `. 
-	We suggest to download the FASTA file provided by Brian Bushnell for removing human contamination, using the instruction available [here](http://seqanswers.com/forums/showthread.php?t=42552);
+- two FASTA files describing synthetic contaminants. These files (`sequencing_artifacts.fa.gz` and `phix174_ill.ref.fa.gz`) should be available within the BBmap installation. If not, please download them from [here](https://sourceforge.net/projects/bbmap/);
+- a FASTA file describing the contaminating genome(s). This file should be created by the users according to the contaminants present in their dataset. When analysing human metagenome, we suggest including the human genome. Please note that this file should be indexed beforehand. This can be done using BBMap, using the following command: `bbmap.sh -Xmx24G ref=my_contaminants_genomes.fa.gz `. 
+	We suggest downloading the FASTA file provided by Brian Bushnell for removing human contamination, using the instruction available [here](http://seqanswers.com/forums/showthread.php?t=42552);
 - the BowTie2 database file for MetaPhlAn2. This file should be available within the MetaPhlAn2 installation. If not, please download it from [here](https://bitbucket.org/biobakery/metaphlan2/src/40d1bf693089836b5895623dd9ab1b21eb9a794c/db_v20/);
 - the ChocoPhlAn and UniRef databases, that can be downloaded directly by HUMAnN2, as explained [here](https://bitbucket.org/biobakery/humann2/wiki/Home#markdown-header-5-download-the-databases);
 - [optional] a phylogenetic tree used by QIIME to compute a set of alpha-diversity measures (see [here](http://qiime.org/scripts/alpha_diversity.html) for details).
@@ -82,17 +82,17 @@ bbmap.sh -Xmx24G ref=hg19_main_mask_ribo_animal_allplant_allfungus.fa.gz
 ## 4) Docker and/or Singularity setup
 If you are not working on UCT hex, you may have to adapt the dockerfile in this repository for your own use, e.g. to add user-defined bind points. The `Dockerfile` can be built into a docker image on your own system (where docker has been installed) as follows:
 
-First pull the git repository:
+First pull the git repository e.g. :
 ```
 git clone https://github.com/uct-cbio/uct-yamp.git
 ```
 
-Now build a local image by navigating to the folder where the `Dockerfile` is located, then run the following command (be careful to add the dot!):
+Now build a local image by navigating to the folder where the `Dockerfile` is located and running the following command (be careful to add the dot!):
 
 ```
 docker build -t yampdocker .
 ```
-If you are working on a cluster environment you will likely have to convert the docker image to a singularity image. This can be done as follows:
+If you are working on a cluster environment you will likely have to convert the docker image to a singularity image. This can be done using [docker2singularity](https://github.com/singularityware/docker2singularity), e.g. as follows:
 
 ```
 docker run -v /var/run/docker.sock:/var/run/docker.sock -v /home/katie/h3abionet16S/singularity-containers/:/output --privileged -t --rm singularityware/docker2singularity d02667d8d22e
