@@ -51,6 +51,7 @@ The uct-yamp pipeline comes with documentation about the pipeline, found in the 
 
 1. [Installation](docs/installation.md)
 2. [Running the pipeline](docs/usage.md)
+3. [Pipeline results breakdown](docs/results_breakdown.md)
 
 ## Built With
 
