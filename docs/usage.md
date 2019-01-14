@@ -13,8 +13,10 @@ NXF_OPTS='-Xms1g -Xmx4g'
 ```
 For University of Cape Town users who will be running Nextflow on UCT's HPC (hex), you need to include the following two lines in your `~/.bashrc`:
 
+```bash
 JAVA_CMD=/opt/exp_soft/java/jdk1.8.0_31/bin/java
 export PATH=$PATH:/opt/exp_soft/cbio/nextflow
+```
 
 ## Running the pipeline
 The typical command for running the pipeline is as follows:
@@ -53,6 +55,8 @@ Use this parameter to choose a configuration profile. Each profile is designed f
     * Designed to run on UCT's high-performance cluster (hex).
 * `none`
     * No configuration at all. Useful if you want to build your own config from scratch and want to avoid loading in the default `base` config profile (not recommended).
+    
+* You can build your own profile suited to your cluster. See [`conf/uct_hex.config`](../conf/uct_hex.config) as an example
 
 ### `--reads`
 Use this to specify the location of your input FastQ files. For example:
