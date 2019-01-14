@@ -41,8 +41,7 @@ def helpMessage() {
       --bt2options 		   Presets options for BowTie2, default="very-sensitive"
       
     Other options:
-      --keepQCtmpfile		    Whether the temporary files resulting from QC steps should be kept, default=false
-      --keepCCtmpfile		    Whether the temporary files resulting from MetaPhlAn2 and HUMAnN2 should be kept, default=false 
+      --keepCCtmpfile		    Whether the temporary files resulting from MetaPhlAn2 and HUMAnN2 should be kept, default=false
       --outdir                      The output directory where the results will be saved
       --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
       -name                         Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.
@@ -207,7 +206,6 @@ process bbduk {
 	file(phix174ill) from Channel.from( file(params.phix174ill) )
 
 	output:
-	set val(pairId), file("${pairId}_trimmed_R1.fq"), file("${pairId}_trimmed_R2.fq"), file("${pairId}_trimmed_singletons.fq") into todecontaminate, topublishtrim
 	set val(pairId), file("${pairId}_trimmed_R1.fq"), file("${pairId}_trimmed_R2.fq") into filteredReadsforQC
 
 	script:
@@ -328,6 +326,7 @@ process metaphlan2 {
 	file(bowtie2db) from Channel.fromPath( params.bowtie2db, type: 'dir' )
 
     output:
+    	file "${params.prefix}.biom"
 	file "${pairId}_metaphlan_profile.tsv" into metaphlantohumann2
 	file "${pairId}_bt2out.txt" into topublishprofiletaxa
 
@@ -405,35 +404,11 @@ process humann2 {
 }
 
 
-/*
- *
- * Step 7:  Save trimmed and decontaminated reads if requested
- *
- */
-	
-	
-process saveQCtmpfile {
 
-	publishDir  "${params.outdir}/QCtmpfiles", mode: 'copy'
-		
-	input:
-	file (tmpfile) from topublishdedupe.mix(topublishtrim, topublishdecontaminate).flatMap()
-
-	output:
-	file "*.fq.gz"
-
-	when:
-	params.keepQCtmpfile
-		
-	script:
-	"""
-	gzip --force -c $tmpfile > ${tmpfile}.gz
-	"""
-}
 
 /*
  *
- * Step 8:  Save tmp files from metaphlan2 and humann2 if requested
+ * Step 7:  Save tmp files from metaphlan2 and humann2 if requested
  *
  */	
 	
