@@ -326,7 +326,7 @@ process metaphlan2 {
 	file(bowtie2db) from Channel.fromPath( params.bowtie2db, type: 'dir' )
 
     output:
-    	file "${params.prefix}.biom"
+    	file "${pairId}.biom"
 	file "metaphlan_merged_abundance_table.tsv"
 	file "${pairId}_metaphlan_profile.tsv" into metaphlantohumann2
 	file "${pairId}_bt2out.txt" into topublishprofiletaxa
@@ -343,8 +343,8 @@ process metaphlan2 {
 	$infile ${pairId}_metaphlan_profile.tsv
 	
 	#Sets the sample ID in the biom file
-	sed -i 's/Metaphlan2_Analysis/${pairId}/g' ${pairId}.biom
-	sed -i 's/Metaphlan2_Analysis/${pairId}/g' ${pairId}_metaphlan_profile.tsv
+	#sed -i 's/Metaphlan2_Analysis/${pairId}/g' ${pairId}.biom
+	#sed -i 's/Metaphlan2_Analysis/${pairId}/g' ${pairId}_metaphlan_profile.tsv
 	
 	#KL add: make one file combining all samples (needs testing, perphaps own process)
 	merge_metaphlan_tables.py *_metaphlan_profile.tsv > metaphlan_merged_abundance_table.tsv
