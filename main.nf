@@ -355,7 +355,7 @@ process metaphlan2 {
 
 
 process humann2 {
-
+	tag{ "humann2" }
 	publishDir  "${params.outdir}/humann2", mode: 'copy', pattern: "*.{tsv,log}", overwrite: false
 	
 	input:
@@ -415,7 +415,7 @@ process humann2 {
  */	
 	
 process saveCCtmpfile {
-
+	tag{ "saveCCtmpfile" }
 	publishDir  "${params.outdir}/CCtmpfiles", mode: 'copy'
 		
 	input:
