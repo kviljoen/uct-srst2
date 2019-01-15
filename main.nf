@@ -326,10 +326,9 @@ process metaphlan2 {
 	file(mpa_pkl) from Channel.from( file(params.mpa_pkl) )
 	file(bowtie2db) from Channel.fromPath( params.bowtie2db, type: 'dir' )
 
-    output:
+    	output:
     	file "${pairId}.biom"
-	file "metaphlan_merged_abundance_table.tsv"
-	file "${pairId}_metaphlan_profile.tsv" into metaphlantohumann2
+	file "${pairId}_metaphlan_profile.tsv" into metaphlantohumann2, metaphlantomerge
 	file "${pairId}_bt2out.txt" into topublishprofiletaxa
 
 
@@ -342,15 +341,34 @@ process metaphlan2 {
 	metaphlan2.py --input_type fastq --tmp_dir=. --biom ${pairId}.biom --bowtie2out=${pairId}_bt2out.txt \
 	--mpa_pkl $mpa_pkl  --bowtie2db $bowtie2db/$params.bowtie2dbfiles --bt2_ps $params.bt2options --nproc ${task.cpus} \
 	$infile ${pairId}_metaphlan_profile.tsv
-	
-	#Sets the sample ID in the biom file
-	#sed -i 's/Metaphlan2_Analysis/${pairId}/g' ${pairId}.biom
-	#sed -i 's/Metaphlan2_Analysis/${pairId}/g' ${pairId}_metaphlan_profile.tsv
-	
-	#KL add: make one file combining all samples (needs testing, perphaps own process)
-	merge_metaphlan_tables.py *_metaphlan_profile.tsv > metaphlan_merged_abundance_table.tsv
+
 
 	"""
+}
+
+/*
+ *
+ * Step 7:  merge all metaphlan2 per sample outputs into single abundance table
+ *
+ */
+
+process merge_metaphlan2 {
+	tag{ "merge_metaphlan2_table" }
+	
+	publishDir  "${params.outdir}/metaphlan2", mode: 'copy', overwrite: false
+	
+	input: file(infile) from metaphlantomerge
+	
+	output: file "metaphlan_merged_abundance_table.tsv"
+	
+	script:
+	"""
+
+ 	merge_metaphlan_tables.py *_metaphlan_profile.tsv > metaphlan_merged_abundance_table.tsv
+	
+	"""
+	
+	
 }
 
 
@@ -364,7 +382,7 @@ process humann2 {
 	file(chocophlan) from Channel.fromPath( params.chocophlan, type: 'dir' )
 	file(uniref) from Channel.fromPath( params.uniref, type: 'dir' )
 	
-    output:
+    	output:
 	file "${pairId}_genefamilies.tsv"
 	file "${pairId}_pathcoverage.tsv"
 	file "${pairId}_pathabundance.tsv"
