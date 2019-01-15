@@ -171,7 +171,7 @@ process runMultiQC{
  */
 
 process dedup {
-	tag{ "dedup" }
+	tag { "dedup.${pairId}" }
 
 	input:
 	set val(pairId), file(reads) from ReadPairs
@@ -197,7 +197,7 @@ process dedup {
  */
 
 process bbduk {
-	tag{ "bbduk" }
+	tag{ "bbduk.${pairId}" }
 	
 	input:
 	set val(pairId), file("${pairId}_dedupe_R1.fq"), file("${pairId}_dedupe_R2.fq") from totrim
@@ -281,7 +281,7 @@ process runMultiQC_postfilterandtrim {
  */
 
 process decontaminate {
-	tag{ "decon" }
+	tag{ "decon.${pairId}" }
 	publishDir  "${params.outdir}/decontaminate" , mode: 'copy', pattern: "*_clean.fq.gz", overwrite: false
 	cache 'deep'
 	
@@ -317,7 +317,7 @@ process decontaminate {
  */
 
 process metaphlan2 {
-	tag{ "metaphlan2" }
+	tag{ "metaphlan2.${pairId}" }
 	
 	publishDir  "${params.outdir}/metaphlan2", mode: 'copy', pattern: "*.{biom,tsv}", overwrite: false
 	
@@ -371,9 +371,14 @@ process merge_metaphlan2 {
 	
 }
 
+/*
+ *
+ * Step 8:  Create functional profiles with humann2 (run per sample)
+ *
+ */	
 
 process humann2 {
-	tag{ "humann2" }
+	tag{ "humann2.${pairId}" }
 	publishDir  "${params.outdir}/humann2", mode: 'copy', pattern: "*.{tsv,log}", overwrite: false
 	
 	input:
@@ -428,7 +433,7 @@ process humann2 {
 
 /*
  *
- * Step 7:  Save tmp files from metaphlan2 and humann2 if requested
+ * Step 9:  Save tmp files from metaphlan2 and humann2 if requested
  *
  */	
 	
@@ -453,7 +458,7 @@ process saveCCtmpfile {
 
 /*
  *
- * Step 8: Completion e-mail notification
+ * Step 10: Completion e-mail notification
  *
  */
 workflow.onComplete {
