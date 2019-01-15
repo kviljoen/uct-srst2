@@ -206,7 +206,8 @@ process bbduk {
 	file(phix174ill) from Channel.from( file(params.phix174ill) )
 
 	output:
-	set val(pairId), file("${pairId}_trimmed_R1.fq"), file("${pairId}_trimmed_R2.fq") into filteredReadsforQC, todecontaminate
+	set val(pairId), file("${pairId}_trimmed_R1.fq"), file("${pairId}_trimmed_R2.fq"), file("${pairId}_trimmed_singletons.fq") into todecontaminate
+	set val(pairId), file("${pairId}_trimmed_R1.fq"), file("${pairId}_trimmed_R2.fq") into filteredReadsforQC
 
 	script:
 	"""	
