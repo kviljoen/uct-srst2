@@ -327,6 +327,7 @@ process metaphlan2 {
 
     output:
     	file "${params.prefix}.biom"
+	file "metaphlan_merged_abundance_table.tsv"
 	file "${pairId}_metaphlan_profile.tsv" into metaphlantohumann2
 	file "${pairId}_bt2out.txt" into topublishprofiletaxa
 
