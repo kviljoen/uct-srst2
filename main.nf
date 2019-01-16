@@ -290,7 +290,7 @@ process decontaminate {
 	publishDir  "${params.outdir}/decontaminate" , mode: 'copy', pattern: "*_clean.fq.gz", overwrite: false
 	cache 'deep'
 	
-	refForeignGenome_ref = file(params.refForeingGenome, type: 'dir')
+	refForeignGenome_ref = file(params.refForeignGenome, type: 'dir')
 
 	input:
 	set val(pairId), file("${pairId}_trimmed_R1.fq"), file("${pairId}_trimmed_R2.fq"), file("${pairId}_trimmed_singletons.fq") from todecontaminate
