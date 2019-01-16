@@ -199,11 +199,16 @@ process dedup {
 process bbduk {
 	tag{ "bbduk.${pairId}" }
 	
+	//bbduk reference files
+	adapters_ref = file(params.adapters)
+	artifacts_ref = file(params.artifacts)
+	phix174ill_ref = file(params.phix174ill)
+	
 	input:
 	set val(pairId), file("${pairId}_dedupe_R1.fq"), file("${pairId}_dedupe_R2.fq") from totrim
-	file(adapters) from Channel.from( file(params.adapters) )
-	file(artifacts) from Channel.from( file(params.artifacts) )
-	file(phix174ill) from Channel.from( file(params.phix174ill) )
+	file adapters from adapters_ref
+	file artifacts from artifacts_ref
+	file phix174ill from phix174ill_ref
 
 	output:
 	set val(pairId), file("${pairId}_trimmed_R1.fq"), file("${pairId}_trimmed_R2.fq"), file("${pairId}_trimmed_singletons.fq") into todecontaminate
@@ -285,9 +290,11 @@ process decontaminate {
 	publishDir  "${params.outdir}/decontaminate" , mode: 'copy', pattern: "*_clean.fq.gz", overwrite: false
 	cache 'deep'
 	
+	refForeignGenome_ref = file(params.refForeingGenome, type: 'dir')
+
 	input:
 	set val(pairId), file("${pairId}_trimmed_R1.fq"), file("${pairId}_trimmed_R2.fq"), file("${pairId}_trimmed_singletons.fq") from todecontaminate
-	file(refForeingGenome) from Channel.from( file(params.refForeingGenome, type: 'dir') )
+	file refForeignGenome from refForeignGenome_ref
 	
 	output:
 	file "*_clean.fq.gz"
