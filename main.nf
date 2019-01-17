@@ -367,7 +367,7 @@ process merge_metaphlan2 {
 	
 	publishDir  "${params.outdir}/metaphlan2", mode: 'copy', overwrite: false
 	
-	input: file(infile) from metaphlantomerge
+	input: file('*') from metaphlantomerge.collect()
 	
 	output: file "metaphlan_merged_abundance_table.tsv"
 	
