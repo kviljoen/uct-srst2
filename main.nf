@@ -328,10 +328,13 @@ process metaphlan2 {
 	
 	publishDir  "${params.outdir}/metaphlan2", mode: 'copy', pattern: "*.{biom,tsv}", overwrite: false
 	
+	mpa_pkl_ref = file(params.mpa_pkl)
+	bowtie2db_ref = file(params.bowtie2db, type: 'dir')
+	
 	input:
 	set val(pairId), file(infile) from cleanreadstometaphlan2
-	file(mpa_pkl) from Channel.from( file(params.mpa_pkl) )
-	file(bowtie2db) from Channel.fromPath( params.bowtie2db, type: 'dir' )
+	file mpa_pkl from mpa_pkl_ref
+	file bowtie2db from bowtie2db_ref
 
     	output:
     	file "${pairId}.biom"
@@ -388,11 +391,14 @@ process humann2 {
 	tag{ "humann2.${pairId}" }
 	publishDir  "${params.outdir}/humann2", mode: 'copy', pattern: "*.{tsv,log}", overwrite: false
 	
+	chocophlan_ref = file(params.chocophlan, type: 'dir')
+	uniref_ref = file(params.uniref, type: 'dir')
+	
 	input:
 	set val(pairId), file(cleanreads) from cleanreadstohumann2
 	file(humann2_profile) from metaphlantohumann2
-	file(chocophlan) from Channel.fromPath( params.chocophlan, type: 'dir' )
-	file(uniref) from Channel.fromPath( params.uniref, type: 'dir' )
+	file chocophlan from chocophlan_ref
+	file uniref from uniref_ref
 	
     	output:
 	file "${pairId}_genefamilies.tsv"
