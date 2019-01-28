@@ -38,6 +38,8 @@ A reference-based WGS metagenomics pipeline using the Nextflow workflow manager.
      Help:
       --help			Will print out summary above when executing nextflow run uct-cbio/uct-yamp --help 
 
+# ![kviljoen/YAMP](/assets/yamp_DAG.svg)
+
 ## Prerequisites
 
 Nextflow (0.26.x or higher), all other software/tools required are contained in the (platform-independent) dockerfile, which should be converted to a singularity image for use on a cluster environment. If you are working on the UCT cluster, all necessary singularity images are specified in the uct_hex.conf profile. If you are working on another cluster environment you would need to build your own singularity image, using the Dockerfile in this repo as a starting point, specifying your own relevant working directories using ```RUN mkdir -p```
