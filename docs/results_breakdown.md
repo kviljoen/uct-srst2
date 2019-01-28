@@ -5,7 +5,7 @@
 
 Several folders will be created during the pipeline. Not all results are saved in the final results folders. Several intermediate/temporary files are only kept in Nextflow's ```work``` directory and can be deleted after completing a run to limit unecessary storage requirements. In order of creation these are
 * ```FilterAndTrim``` This folder contains FastQC results with a folder for each sample. It also contains the summary MultiQC report
-* ```FastQC_post_filter_trim``` This folder contains FastQC results performed on fastq files after trimming and filtering has been performed using BBDUK
+* ```FastQC_post_filter_trim``` This folder contains FastQC results performed on fastq files after trimming and filtering has been performed using BBDUK. It also contains the summary post-filtering and -trimming MultiQC report.
 * ```decontaminate``` This folder contains trimmed, filtered and decontaminated sample .fastq files (*_clean.fq.gz)
 * ```methaphlan2``` This folder contains, for each sample, taxonomic profiling and binning results (*_metaphlan_profile.tsv)
 * ```humann2 ``` This folder contains, for each sample, functional profiling results (*_genefamilies.tsv; *_pathabundance.tsv; *_pathcoverage.tsv)
