@@ -38,6 +38,8 @@ A reference-based WGS metagenomics pipeline using the Nextflow workflow manager.
      Help:
       --help			Will print out summary above when executing nextflow run uct-cbio/uct-yamp --help 
 
+## Nextflow pipeline data flow
+In the direct acyclic graph (DAG) below, vertices represent the pipeline's processes and operators, while the edges represent the data connections (i.e. channels) between them.
 # ![kviljoen/YAMP](/assets/yamp_DAG.svg)
 
 ## Prerequisites
