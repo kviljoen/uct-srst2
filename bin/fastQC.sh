@@ -33,8 +33,7 @@
 export JAVA_TOOL_OPTIONS="-Djava.awt.headless=true"
 
 #Performs QC
-fastqc --quiet --noextract --format fastq --outdir=. --threads $3 $1
-
+fastqc --quiet --noextract --format fastq --outdir=. --threads $3 $1 
 mv *_fastqc.html ${2}_fastqc.html
-unzip -p *_fastqc.zip ${base}*/fastqc_data.txt > ${2}_fastqc_data.txt  
-rm -rf *.zip	
+jar xvf *_fastqc.zip | ${base}*/fastqc_data.txt > ${2}_fastqc_data.txt  
+#rm -rf *.zip	
