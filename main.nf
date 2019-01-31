@@ -85,6 +85,10 @@ if( !(workflow.runName ==~ /[a-z]+_[a-z]+/) ){
   custom_runName = workflow.runName
 }
 
+// Returns a tuple of read pairs in the form
+// [sample_id, forward.fq, reverse.fq] where
+// the dataset_id is the shared prefix from
+// the two paired FASTQ files.
 Channel
     .fromFilePairs( params.reads )
     .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
