@@ -78,6 +78,10 @@ if( params.mlst_definitions ) {
         mlst_definitions= file(params.mlst_definitions)
         if( !mlst_definitions.exists() ) exit 1, "MLST definitions file could not be found: ${params.mlst_definitions}"
 }
+if( params.AMR_db ) {
+        AMR_db = file(params.AMR_db)
+        if( !AMR_db.exists() ) exit 1, "AMR DB file could not be found: ${params.AMR_db}"
+}
 
 // Returns a tuple of read pairs in the form
 // [sample_id, forward.fq, reverse.fq] where
