@@ -143,7 +143,7 @@ process srst2 {
     
     """
     srst2 --forward ${reads[0]} --reverse ${reads[1]} --output ${pairId}_srst2 --mlst_db $mlst_db \
-    --mlst_definitions $mlst_definitions --mlst_delimiter $params.mlst_delimiter
+    --mlst_definitions $mlst_definitions --mlst_delimiter $params.mlst_delimiter --gene_db $AMR_db
     """
 }
 
