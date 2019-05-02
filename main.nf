@@ -141,7 +141,7 @@ process srst2 {
         set pairId, file(reads) from ReadPairsToSrst2
 
     output:
-        file "${pairId}_srst2*results.txt" into srst2_results
+	file("${pairId}_srst2*")	
 	
     script:
     
