@@ -1,9 +1,9 @@
 #!/usr/bin/env nextflow
 /*
 ========================================================================================
-               M E T A G E N O M I C S   P I P E L I N E
+              		   UCT-SRST2   P I P E L I N E
 ========================================================================================
- METAGENOMICS NEXTFLOW PIPELINE ADAPTED FROM YAMP FOR UCT CBIO
+ 			MLST NEXTFLOW PIPELINE USING SRST2
  
 ----------------------------------------------------------------------------------------
 */
@@ -15,7 +15,7 @@
 def helpMessage() {
     log.info"""
     ===================================
-     uct-yamp  ~  version ${params.version}
+     uct-srst2  ~  version ${params.version}
     ===================================
     Usage:
     The typical command for running the pipeline is as follows:
@@ -23,25 +23,16 @@ def helpMessage() {
     Mandatory arguments:
       --reads                       Path to input data (must be surrounded with quotes)
       -profile                      Hardware config to use. uct_hex OR standard
+      --mlst_db			    Specify fasta-formatted mlst database for srst2
+      --mlst_definitions	    Definitions for MLST scheme (required if mlst_db
+                        	    supplied and you want to calculate STs)
+    Other srst2 options:
+      --mlst_delimiter		    Character(s) separating gene name from allele number
+                        	    in MLST database (default "-", as in arcc-1)
+      --mlst_max_mismatch	    Maximum number of mismatches per read for MLST allele calling (default 10)
+      --AMR_db			    Fasta-fromatted gene databases for resistance gene analysis (optional)
       
-    BBduk trimming options:
-      --qin			    Input quality offset: 33 (ASCII+33) or 64 (ASCII+64, default=33
-      --kcontaminants		    Kmer length used for finding contaminants, default=23	
-      --phred			    Regions with average quality BELOW this will be trimmed, default=10 
-      --minlength		    Reads shorter than this after trimming will be discarded, default=60
-      --mink			    Shorter kmers at read tips to look for, default=11 
-      --hdist			    Maximum Hamming distance for ref kmers, default=1            
-
-    BBwrap parameters for decontamination:	
-      --mind			   Approximate minimum alignment identity to look for, default=0.95
-      --maxindel		   Longest indel to look for, default=3
-      --bwr			   Restrict alignment band to this, default=0.16
-	
-    MetaPhlAn2 parameters: 
-      --bt2options 		   Presets options for BowTie2, default="very-sensitive"
-      
-    Other options:
-      --keepCCtmpfile		    Whether the temporary files resulting from MetaPhlAn2 and HUMAnN2 should be kept, default=false
+    General options:
       --outdir                      The output directory where the results will be saved
       --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
       -name                         Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.
@@ -70,19 +61,22 @@ if (params.help){
 
 //Validate inputs	
 
-//if (params.librarylayout != "paired" && params.librarylayout != "single") { 
-//	exit 1, "Library layout not available. Choose any of <single, paired>" 
-//}   
-
-if (params.qin != 33 && params.qin != 64) {  
-	exit 1, "Input quality offset (qin) not available. Choose either 33 (ASCII+33) or 64 (ASCII+64)" 
-}   
-
 // Has the run name been specified by the user?
 //  this has the bonus effect of catching both -name and --name
 custom_runName = params.name
 if( !(workflow.runName ==~ /[a-z]+_[a-z]+/) ){
   custom_runName = workflow.runName
+}
+
+// Validate user-inputs
+if( params.mlst_db ) {
+        mlst_db = file(params.mlst_db)
+        if( !mlst_db.exists() ) exit 1, "MLST DB file could not be found: ${params.mlst_db}"
+}
+
+if( params.mlst_definitions ) {
+        mlst_definitions= file(params.mlst_definitions)
+        if( !mlst_definitions.exists() ) exit 1, "MLST definitions file could not be found: ${params.mlst_definitions}"
 }
 
 // Returns a tuple of read pairs in the form
@@ -91,12 +85,12 @@ if( !(workflow.runName ==~ /[a-z]+_[a-z]+/) ){
 // the two paired FASTQ files.
 Channel
     .fromFilePairs( params.reads )
-    .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
-    .into { ReadPairsToQual; ReadPairs }
+    .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads}\nNB: Path needs to be enclosed in quotes!\nNB: Path requires at least one * wildcard!\n
+    .into { ReadPairsToSrst2 }
 
 // Header log info
 log.info "==================================="
-log.info " uct-yamp  ~  version ${params.version}"
+log.info " uct-srst2  ~  version ${params.version}"
 log.info "==================================="
 def summary = [:]
 summary['Run Name']     = custom_runName ?: workflow.runName
@@ -131,408 +125,29 @@ log.info "========================================="
 		
 /*
  *
- * Step 1: FastQC (run per sample)
+ * Step 1: srst2 (run per sample)
  *
  */
 
-process runFastQC {
-    tag { "rFQC.${pairId}" }
-    publishDir "${params.outdir}/FilterAndTrim", mode: "copy", overwrite: false
+process srst2 {
+    tag { "srst2.${pairId}" }
+    publishDir "${params.outdir}/srst2", mode: "copy", overwrite: false
 
     input:
-        set pairId, file(in_fastq) from ReadPairsToQual
+        set pairId, file(reads) from ReadPairsToSrst2
 
     output:
-        file("${pairId}_fastqc/*.zip") into fastqc_files
-
+        file("*") into srst2_results
+	
+    script:
+    
     """
-    mkdir ${pairId}_fastqc
-    fastqc --outdir ${pairId}_fastqc \
-    ${in_fastq.get(0)} \
-    ${in_fastq.get(1)}
-    """
-}
-
-process runMultiQC{
-    tag { "rMQC" }
-    publishDir "${params.outdir}/FilterAndTrim", mode: 'copy', overwrite: false
-
-    input:
-        file('*') from fastqc_files.collect()
-
-    output:
-        file('multiqc_report.html')
-
-    """
-    multiqc .
+    srst2 --forward ${reads[0]} --reverse ${reads[1]} --output ${pairId}_srst2 --mlst_db $mlst_db \
+    --mlst_definitions $mlst_definitions --mlst_delimiter $params.mlst_delimiter
     """
 }
 
-/*
- *
- * Step 2: De-duplication (run per sample)
- *
- */
-
-process dedup {
-	tag { "dedup.${pairId}" }
-
-	input:
-	set val(pairId), file(reads) from ReadPairs
-
-	output:
-	set val(pairId), file("${pairId}_dedupe_R1.fq"), file("${pairId}_dedupe_R2.fq") into totrim, topublishdedupe
-
-	script:
-	"""
-	maxmem=\$(echo ${task.memory} | sed 's/ //g' | sed 's/B//g')
-
-	clumpify.sh -Xmx\"\$maxmem\" in1="${reads[0]}" in2="${reads[1]}" out1=${pairId}_dedupe_R1.fq out2=${pairId}_dedupe_R2.fq \
-	qin=$params.qin dedupe subs=0 threads=${task.cpus}
-	
-	"""
-}
-
-
-/*
- *
- * Step 3: BBDUK: trim + filter (run per sample)
- *
- */
-
-process bbduk {
-	tag{ "bbduk.${pairId}" }
-	
-	//bbduk reference files
-	adapters_ref = file(params.adapters)
-	artifacts_ref = file(params.artifacts)
-	phix174ill_ref = file(params.phix174ill)
-	
-	input:
-	set val(pairId), file("${pairId}_dedupe_R1.fq"), file("${pairId}_dedupe_R2.fq") from totrim
-	file adapters from adapters_ref
-	file artifacts from artifacts_ref
-	file phix174ill from phix174ill_ref
-
-	output:
-	set val(pairId), file("${pairId}_trimmed_R1.fq"), file("${pairId}_trimmed_R2.fq"), file("${pairId}_trimmed_singletons.fq") into todecontaminate
-	set val(pairId), file("${pairId}_trimmed_R1.fq"), file("${pairId}_trimmed_R2.fq") into filteredReadsforQC
-
-	script:
-	"""	
-	maxmem=\$(echo ${task.memory} | sed 's/ //g' | sed 's/B//g')
-
-	#Quality and adapter trim:
-	bbduk.sh -Xmx\"\$maxmem\" in=${pairId}_dedupe_R1.fq in2=${pairId}_dedupe_R2.fq out=${pairId}_trimmed_R1_tmp.fq \
-	out2=${pairId}_trimmed_R2_tmp.fq outs=${pairId}_trimmed_singletons_tmp.fq ktrim=r \
-	k=$params.kcontaminants mink=$params.mink hdist=$params.hdist qtrim=rl trimq=$params.phred \
-	minlength=$params.minlength ref=$adapters qin=$params.qin threads=${task.cpus} tbo tpe 
-	
-	#Synthetic contaminants trim:
-	bbduk.sh -Xmx\"\$maxmem\" in=${pairId}_trimmed_R1_tmp.fq in2=${pairId}_trimmed_R2_tmp.fq \
-	out=${pairId}_trimmed_R1.fq out2=${pairId}_trimmed_R2.fq k=31 ref=$phix174ill,$artifacts \
-	qin=$params.qin threads=${task.cpus} 
-
-	#Synthetic contaminants trim for singleton reads:
-	bbduk.sh -Xmx\"\$maxmem\" in=${pairId}_trimmed_singletons_tmp.fq out=${pairId}_trimmed_singletons.fq \
-	k=31 ref=$phix174ill,$artifacts qin=$params.qin threads=${task.cpus}
-
-	#Removes tmp files. This avoids adding them to the output channels
-	rm -rf ${pairId}_trimmed*_tmp.fq 
-
-	"""
-}
-
-
-/*
- *
- * Step 4: FastQC post-filter and -trim (run per sample)
- *
- */
-
-process runFastQC_postfilterandtrim {
-    tag { "rFQC_post_FT.${pairId}" }
-    publishDir "${params.outdir}/FastQC_post_filter_trim", mode: "copy", overwrite: false
-
-    input:
-    	set val(pairId), file("${pairId}_trimmed_R1.fq"), file("${pairId}_trimmed_R2.fq") from filteredReadsforQC
-
-    output:
-        file("${pairId}_fastqc_postfiltertrim/*.zip") into fastqc_files_2
-
-    """
-    mkdir ${pairId}_fastqc_postfiltertrim
-    fastqc --outdir ${pairId}_fastqc_postfiltertrim \
-    ${pairId}_trimmed_R1.fq \
-    ${pairId}_trimmed_R2.fq
-    """
-}
-
-process runMultiQC_postfilterandtrim {
-    tag { "rMQC_post_FT" }
-    publishDir "${params.outdir}/FastQC_post_filter_trim", mode: 'copy', overwrite: false
-
-    input:
-        file('*') from fastqc_files_2.collect()
-
-    output:
-        file('multiqc_report.html')
-
-    """
-    multiqc .
-    """
-}
-
-/*
- *
- * Step 5: Decontamination (run per sample)
- *
- */
-
-process decontaminate {
-	tag{ "decon.${pairId}" }
-	publishDir  "${params.outdir}/decontaminate" , mode: 'copy', pattern: "*_clean.fq.gz", overwrite: false
-	cache 'deep'
-	
-	refForeignGenome_ref = file(params.refForeignGenome, type: 'dir')
-
-	input:
-	set val(pairId), file("${pairId}_trimmed_R1.fq"), file("${pairId}_trimmed_R2.fq"), file("${pairId}_trimmed_singletons.fq") from todecontaminate
-	file refForeignGenome from refForeignGenome_ref
-	
-	output:
-	file "*_clean.fq.gz"
-	set val(pairId), file("${pairId}_clean.fq") into cleanreadstometaphlan2, cleanreadstohumann2 
-	set val(pairId), file("${pairId}_cont.fq") into topublishdecontaminate
-	
-	script:
-	"""
-	maxmem=\$(echo ${task.memory} | sed 's/ //g' | sed 's/B//g')
-	
-	#Decontaminate from foreign genomes
-	bbwrap.sh  -Xmx\"\$maxmem\" mapper=bbmap append=t in1=${pairId}_trimmed_R1.fq,${pairId}_trimmed_singletons.fq in2=${pairId}_trimmed_R2.fq,null \
-	outu=${pairId}_clean.fq outm=${pairId}_cont.fq minid=$params.mind \
-	maxindel=$params.maxindel bwr=$params.bwr bw=12 minhits=2 qtrim=rl trimq=$params.phred \
-	path=$refForeignGenome qin=$params.qin threads=${task.cpus} untrim quickmatch fast
-	
-	gzip -c ${pairId}_clean.fq > ${pairId}_clean.fq.gz
-
-	"""
-}
-
-
-/*
- *
- * Step 6:  metaphlan2 (run per sample)
- *
- */
-
-process metaphlan2 {
-	tag{ "metaphlan2.${pairId}" }
-	
-	publishDir  "${params.outdir}/metaphlan2", mode: 'copy', pattern: "*.{biom,tsv}", overwrite: false
-	
-	mpa_pkl_ref = file(params.mpa_pkl)
-	bowtie2db_ref = file(params.bowtie2db, type: 'dir')
-	
-	input:
-	set val(pairId), file(infile) from cleanreadstometaphlan2
-	file mpa_pkl from mpa_pkl_ref
-	file bowtie2db from bowtie2db_ref
-
-    	output:
-    	file "${pairId}.biom"
-	file "${pairId}_metaphlan_profile.tsv" into metaphlantohumann2, metaphlantomerge
-	file "${pairId}_bt2out.txt" into topublishprofiletaxa
-
-
-	script:
-	"""
-	#If a file with the same name is already present, Metaphlan2 will crash
-	rm -rf ${pairId}_bt2out.txt
-
-	#Estimate taxon abundances
-	metaphlan2.py --input_type fastq --tmp_dir=. --biom ${pairId}.biom --bowtie2out=${pairId}_bt2out.txt \
-	--mpa_pkl $mpa_pkl  --bowtie2db $bowtie2db/$params.bowtie2dbfiles --bt2_ps $params.bt2options --nproc ${task.cpus} \
-	$infile ${pairId}_metaphlan_profile.tsv
-
-
-	"""
-}
-
-/*
- *
- * Step 7:  merge all metaphlan2 per sample outputs into single abundance table
- *
- */
-
-process merge_metaphlan2 {
-	tag{ "merge_metaphlan2_table" }
-	
-	publishDir  "${params.outdir}/metaphlan2", mode: 'copy', overwrite: false
-	
-	input: file('*') from metaphlantomerge.collect()
-	
-	output: file "metaphlan_merged_abundance_table.tsv"
-	
-	script:
-	"""
-
- 	merge_metaphlan_tables.py *_metaphlan_profile.tsv > metaphlan_merged_abundance_table.tsv
-	
-	"""
-	
-	
-}
-
-/*
- *
- * Step 8:  Create functional profiles with humann2 (run per sample)
- *
- */	
-
-process humann2 {
-	tag{ "humann2.${pairId}" }
-	publishDir  "${params.outdir}/humann2", mode: 'copy', pattern: "*.{tsv,log}", overwrite: false
-	
-	chocophlan_ref = file(params.chocophlan, type: 'dir')
-	uniref_ref = file(params.uniref, type: 'dir')
-	
-	input:
-	set val(pairId), file(cleanreads) from cleanreadstohumann2
-	file(humann2_profile) from metaphlantohumann2
-	file chocophlan from chocophlan_ref
-	file uniref from uniref_ref
-	
-    	output:
-	file "${pairId}_genefamilies.tsv"
-	file "${pairId}_pathcoverage.tsv"
-	file "${pairId}_pathabundance.tsv"
-	
-	//Those may or may not be kept, according to the value of the keepCCtmpfile parameter
-	set ("${pairId}_bowtie2_aligned.sam", "${pairId}_bowtie2_aligned.tsv", "${pairId}_diamond_aligned.tsv", 
-	     "${pairId}_bowtie2_unaligned.fa", "${pairId}_diamond_unaligned.fa") into topublishhumann2	
-
-	script:
-	"""
-	#Functional annotation
-	humann2 --input $cleanreads --output . --output-basename ${pairId} \
-	--taxonomic-profile $humann2_profile --nucleotide-database $chocophlan --protein-database $uniref \
-	--pathways metacyc --threads ${task.cpus} --memory-use maximum
-
-	
-	#Performs functional annotation, redirect is done here because HUMAnN2 freaks out
-
-
-	#Some of temporary files (if they exist) may be moved in the working directory, 
-	#according to the keepCCtmpfile parameter. Others (such as the bowties2 indexes), 
-	#are always removed. Those that should be moved, but have not been created by 
-	#HUMAnN2, are now created by the script (they are needed as output for the channel)
-	files=(${pairId}_bowtie2_aligned.sam ${pairId}_bowtie2_aligned.tsv ${pairId}_diamond_aligned.tsv \
-	${pairId}_bowtie2_unaligned.fa ${pairId}_diamond_unaligned.fa)
-	
-	for i in {1..5}
-	do
-		if [ -f ${pairId}_humann2_temp/\${files[((\$i-1))]} ]
-		then
-			mv ${pairId}_humann2_temp/\${files[((\$i-1))]} .
-		else
-			touch \${files[((\$i-1))]}
-		fi
-	done
-	rm -rf ${pairId}_humann2_temp/
-
- 	"""
-}
 
 
 
 
-/*
- *
- * Step 9:  Save tmp files from metaphlan2 and humann2 if requested
- *
- */	
-	
-process saveCCtmpfile {
-	tag{ "saveCCtmpfile" }
-	publishDir  "${params.outdir}/CCtmpfiles", mode: 'copy'
-		
-	input:
-	file (tmpfile) from topublishprofiletaxa.mix(topublishhumann2).flatMap()
-
-	output:
-	file "$tmpfile"
-
-	when:
-	params.keepCCtmpfile
-		
-	script:
-	"""
-	echo $tmpfile
-	"""
-}
-
-/*
- *
- * Step 10: Completion e-mail notification
- *
- */
-workflow.onComplete {
-  
-    def subject = "[uct-yamp] Successful: $workflow.runName"
-    if(!workflow.success){
-      subject = "[uct-yamp] FAILED: $workflow.runName"
-    }
-    def email_fields = [:]
-    email_fields['version'] = params.version
-    email_fields['runName'] = custom_runName ?: workflow.runName
-    email_fields['success'] = workflow.success
-    email_fields['dateComplete'] = workflow.complete
-    email_fields['duration'] = workflow.duration
-    email_fields['exitStatus'] = workflow.exitStatus
-    email_fields['errorMessage'] = (workflow.errorMessage ?: 'None')
-    email_fields['errorReport'] = (workflow.errorReport ?: 'None')
-    email_fields['commandLine'] = workflow.commandLine
-    email_fields['projectDir'] = workflow.projectDir
-    email_fields['summary'] = summary
-    email_fields['summary']['Date Started'] = workflow.start
-    email_fields['summary']['Date Completed'] = workflow.complete
-    email_fields['summary']['Pipeline script file path'] = workflow.scriptFile
-    email_fields['summary']['Pipeline script hash ID'] = workflow.scriptId
-    if(workflow.repository) email_fields['summary']['Pipeline repository Git URL'] = workflow.repository
-    if(workflow.commitId) email_fields['summary']['Pipeline repository Git Commit'] = workflow.commitId
-    if(workflow.revision) email_fields['summary']['Pipeline Git branch/tag'] = workflow.revision
-    if(workflow.container) email_fields['summary']['Docker image'] = workflow.container
-
-    // Render the TXT template
-    def engine = new groovy.text.GStringTemplateEngine()
-    def tf = new File("$baseDir/assets/email_template.txt")
-    def txt_template = engine.createTemplate(tf).make(email_fields)
-    def email_txt = txt_template.toString()
-
-    // Render the HTML template
-    def hf = new File("$baseDir/assets/email_template.html")
-    def html_template = engine.createTemplate(hf).make(email_fields)
-    def email_html = html_template.toString()
-
-    // Render the sendmail template
-    def smail_fields = [ email: params.email, subject: subject, email_txt: email_txt, email_html: email_html, baseDir: "$baseDir" ]
-    def sf = new File("$baseDir/assets/sendmail_template.txt")
-    def sendmail_template = engine.createTemplate(sf).make(smail_fields)
-    def sendmail_html = sendmail_template.toString()
-
-    // Send the HTML e-mail
-    if (params.email) {
-        try {
-          if( params.plaintext_email ){ throw GroovyException('Send plaintext e-mail, not HTML') }
-          // Try to send HTML e-mail using sendmail
-          [ 'sendmail', '-t' ].execute() << sendmail_html
-          log.info "[uct-yamp] Sent summary e-mail to $params.email (sendmail)"
-        } catch (all) {
-          // Catch failures and try with plaintext
-          [ 'mail', '-s', subject, params.email ].execute() << email_txt
-          log.info "[uct-yamp] Sent summary e-mail to $params.email (mail)"
-        }
-    }
-}
