@@ -85,7 +85,7 @@ if( params.mlst_definitions ) {
 // the two paired FASTQ files.
 Channel
     .fromFilePairs( params.reads )
-    .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads}\nNB: Path needs to be enclosed in quotes!\nNB: Path requires at least one * wildcard!\n
+    .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads}\nNB: Path needs to be enclosed in quotes!\nNB: Path requires at least one * wildcard!" }
     .into { ReadPairsToSrst2 }
 
 // Header log info
