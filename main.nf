@@ -145,7 +145,6 @@ process srst2 {
 	
     script:
     """
-    mkdir ${params.outdir}/srst2
     srst2 --input_pe $reads --output ${pairId}_srst2 --mlst_db $mlst_db \
     --mlst_definitions $mlst_definitions --mlst_delimiter $params.mlst_delimiter --gene_db $AMR_db
     """
