@@ -146,7 +146,7 @@ process srst2 {
 	file("${pairId}_srst2*")	
 	
     script:      
-    geneDB = gene_db > 0 ? "--gene_db $gene_db" : ''
+    geneDB = gene_db ? "--gene_db $gene_db" : ''
     """
     srst2 --input_pe $reads --output ${pairId}_srst2 --mlst_db $mlst_db \
     --mlst_definitions $mlst_definitions --mlst_delimiter $params.mlst_delimiter $geneDB
