@@ -145,10 +145,11 @@ process srst2 {
     output:
 	file("${pairId}_srst2*")	
 	
-    script:
+    script:      
+    def geneDB = if(params.gene_db) ? "--gene_db $gene_db" : ''
     """
     srst2 --input_pe $reads --output ${pairId}_srst2 --mlst_db $mlst_db \
-    --mlst_definitions $mlst_definitions --mlst_delimiter $params.mlst_delimiter --gene_db $gene_db
+    --mlst_definitions $mlst_definitions --mlst_delimiter $params.mlst_delimiter $geneDB
     """
 }
 
