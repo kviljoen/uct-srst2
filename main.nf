@@ -147,9 +147,10 @@ process srst2 {
 	
     script:      
     geneDB = params.gene_db ? "--gene_db $gene_db" : ''
+    mlstDB = params.mlst_db ? "--mlst_db $mlst_db" : ''
+    mlstdef = params.mlst_db ? "--mlst_definitions $mlst_definitions" : ''
     """
-    srst2 --input_pe $reads --output ${pairId}_srst2 --mlst_db $mlst_db \
-    --mlst_definitions $mlst_definitions --mlst_delimiter $params.mlst_delimiter $geneDB
+    srst2 --input_pe $reads --output ${pairId}_srst2 $mlstDB $mlstdef $geneDB
     """
 }
 
