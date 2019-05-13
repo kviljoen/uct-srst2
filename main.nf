@@ -30,7 +30,7 @@ def helpMessage() {
       --mlst_delimiter		    Character(s) separating gene name from allele number
                         	    in MLST database (default "-", as in arcc-1)
       --mlst_max_mismatch	    Maximum number of mismatches per read for MLST allele calling (default 10)
-      --AMR_db			    Fasta-fromatted gene databases for resistance gene analysis (optional)
+      --gene_db			    Fasta-fromatted gene databases for resistance OR virulence factor OR plasmid analysis (optional)
       
     General options:
       --outdir                      The output directory where the results will be saved
@@ -78,9 +78,9 @@ if( params.mlst_definitions ) {
         mlst_definitions= file(params.mlst_definitions)
         if( !mlst_definitions.exists() ) exit 1, "MLST definitions file could not be found: ${params.mlst_definitions}"
 }
-if( params.AMR_db ) {
-        AMR_db = file(params.AMR_db)
-        if( !AMR_db.exists() ) exit 1, "AMR DB file could not be found: ${params.AMR_db}"
+if( params.gene_db ) {
+        gene_db = file(params.gene_db)
+        if( !gene_db.exists() ) exit 1, "Gene DB file could not be found: ${params.gene_db}"
 }
 
 // Returns a tuple of read pairs in the form
@@ -99,6 +99,8 @@ log.info "==================================="
 def summary = [:]
 summary['Run Name']     = custom_runName ?: workflow.runName
 summary['Reads']        = params.reads
+if(params.mlst_db) summary['MLST DB'] = params.mlst_db
+if(params.gene_db) summary['Gene DB'] = params.gene_db
 summary['OS']		= System.getProperty("os.name")
 summary['OS.arch']	= System.getProperty("os.arch") 
 summary['OS.version']	= System.getProperty("os.version")
@@ -146,7 +148,7 @@ process srst2 {
     script:
     """
     srst2 --input_pe $reads --output ${pairId}_srst2 --mlst_db $mlst_db \
-    --mlst_definitions $mlst_definitions --mlst_delimiter $params.mlst_delimiter --gene_db $AMR_db
+    --mlst_definitions $mlst_definitions --mlst_delimiter $params.mlst_delimiter --gene_db $gene_db
     """
 }
 
