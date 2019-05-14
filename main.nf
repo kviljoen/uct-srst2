@@ -137,7 +137,7 @@ log.info "========================================="
 
 process srst2 {
     tag { "srst2.${pairId}" }
-    publishDir "${params.outdir}/srst2", mode: "copy", overwrite: false
+    publishDir "${params.outdir}/srst2", mode: "copy"
 
     input:
         set pairId, file(reads) from ReadPairsToSrst2
