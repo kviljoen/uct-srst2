@@ -151,7 +151,7 @@ process srst2 {
     mlstdef = params.mlst_db ? "--mlst_definitions $mlst_definitions" : ''
     mlstdelim = params.mlst_db ? "--mlst_delimiter $params.mlst_delimiter" : ''
     """
-    srst2 --input_pe $reads --output ${pairId}_srst2 $mlstDB $mlstdef $mlstdelim $geneDB
+    srst2 --input_pe $reads --output ${pairId}_srst2 --min_coverage $params.min_cov $mlstDB $mlstdef $mlstdelim $geneDB 
     """
 }
 
