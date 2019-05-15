@@ -26,7 +26,8 @@ RUN pip install git+https://github.com/katholt/srst2
 
 # CD-HIT
 RUN git clone https://github.com/weizhongli/cdhit.git && \
-        make MAX_SEQ=10000000 && \
-	      cd
+cd cdhit &&\
+make MAX_SEQ=10000000 && \
+cd
 
   
