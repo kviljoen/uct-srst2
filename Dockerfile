@@ -1,7 +1,7 @@
 FROM ubuntu:16.04
 
 RUN apt-get update && apt-get install -y \
-apt-get install -y python2.7 \
+python2.7 \
 make \
 libc6-dev \
 g++ \
