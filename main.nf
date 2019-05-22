@@ -30,7 +30,7 @@ def helpMessage() {
       --mlst_delimiter		    Character(s) separating gene name from allele number
                         	    in MLST database (default "-", as in arcc-1)
       --mlst_max_mismatch	    Maximum number of mismatches per read for MLST allele calling (default 10)
-      --gene_db			    Fasta-fromatted gene databases for resistance OR virulence factor OR plasmid analysis (optional)
+      --gene_db			    Fasta-fromatted gene databases for resistance OR virulence factor analysis (optional)
       
     General options:
       --outdir                      The output directory where the results will be saved
