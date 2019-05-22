@@ -2,7 +2,7 @@
 
 # UCT-srst2: MLST (and antimicrobial resistance/ virulence factor/ plasmid) analysis using srst2, implemented in Nextflow
 
-This pipeline accepts raw (or trimmed) reads in .fastq format and performs MLST (and optional AMR) analyses using srst2 (https://github.com/andrewjpage/docker_mlst/tree/master/srst2). Implemented for the Ilifu (slurm) cluster, which can be modified by adding a custom config file. The srst2 singularity image used was obtained here https://quay.io/repository/biocontainers/srst2?tab=tags
+This pipeline accepts raw (or trimmed) reads in .fastq format and performs MLST (and optional AMR or virulence factor) analyses using srst2 (https://github.com/andrewjpage/docker_mlst/tree/master/srst2). Implemented for the Ilifu (slurm) cluster, which can be modified by adding a custom config file. The srst2 singularity image used was obtained here https://quay.io/repository/biocontainers/srst2?tab=tags
 
 ## Basic usage:
 
@@ -17,7 +17,7 @@ This pipeline accepts raw (or trimmed) reads in .fastq format and performs MLST 
     srst2 options:
       --mlst_delimiter		Default="-" you may have to change to e.g. "_" depending on the format of your mlst reference file
       --mlst_db			Fasta file of MLST alleles (can be downloaded with getmlst.py from srst2 e.g. getmlst.py --species "Escherichia coli"   
-      --gene_db			Antimicrobial resistence (or other e.g virulence, plasmid) gene DB (Fasta) (can be downloaded from https://github.com/katholt/srst2/tree/master/data or created)
+      --gene_db			Antimicrobial resistence (or other e.g virulence) gene DB (Fasta) (can be downloaded from https://github.com/katholt/srst2/tree/master/data or created)
       
 
      Help:
