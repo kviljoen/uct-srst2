@@ -31,7 +31,8 @@ def helpMessage() {
                         	    in MLST database (default "-", as in arcc-1)
       --mlst_max_mismatch	    Maximum number of mismatches per read for MLST allele calling (default 10)
       --gene_db			    Fasta-fromatted gene databases for resistance OR virulence factor analysis (optional)
-      
+      --min_gene_cov		    Minimum %coverage cutoff for gene reporting (default 90)
+      --max_gene_divergence	    Maximum %divergence cutoff for gene reporting (default 10)
     General options:
       --outdir                      The output directory where the results will be saved
       --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
@@ -101,6 +102,8 @@ summary['Run Name']     = custom_runName ?: workflow.runName
 summary['Reads']        = params.reads
 if(params.mlst_db) summary['MLST DB'] = params.mlst_db
 if(params.gene_db) summary['Gene DB'] = params.gene_db
+summary['Min gene coverage'] = params.min_gene_cov
+summary['Max gene divergence'] = params.max_gene_divergence
 summary['OS']		= System.getProperty("os.name")
 summary['OS.arch']	= System.getProperty("os.arch") 
 summary['OS.version']	= System.getProperty("os.version")
@@ -151,7 +154,7 @@ process srst2 {
     mlstdef = params.mlst_db ? "--mlst_definitions $mlst_definitions" : ''
     mlstdelim = params.mlst_db ? "--mlst_delimiter $params.mlst_delimiter" : ''
     """
-    srst2 --input_pe $reads --output ${pairId}_srst2 --min_coverage $params.min_cov $mlstDB $mlstdef $mlstdelim $geneDB 
+    srst2 --input_pe $reads --output ${pairId}_srst2 --min_coverage $params.min_gene_cov --max_divergence $params.max_gene_divergence $mlstDB $mlstdef $mlstdelim $geneDB 
     """
 }
 
