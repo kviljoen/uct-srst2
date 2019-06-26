@@ -41,7 +41,7 @@ For detailed information please see https://github.com/katholt/srst2
 
 
 ## Credits
-
+Please remember to cite the authors of srst2, see here http://genomemedicine.com/content/6/11/90
 
 ## License
 
