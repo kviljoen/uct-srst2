@@ -18,6 +18,8 @@ This pipeline accepts raw (or trimmed) reads in .fastq format and performs MLST 
       --mlst_delimiter		Default="-" you may have to change to e.g. "_" depending on the format of your mlst reference file
       --mlst_db			Fasta file of MLST alleles (can be downloaded with getmlst.py from srst2 e.g. getmlst.py --species "Escherichia coli"   
       --gene_db			Antimicrobial resistence (or other e.g virulence) gene DB (Fasta) (can be downloaded from https://github.com/katholt/srst2/tree/master/data or created)
+      --min_gene_cov    Minimum %coverage cutoff for gene reporting (default 90)
+      --max_gene_divergence Maximum %divergence cutoff for gene reporting (default 10)
       
 
      Help:
