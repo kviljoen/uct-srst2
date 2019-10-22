@@ -2,7 +2,7 @@
 
 # UCT-srst2: MLST (and antimicrobial resistance/ virulence factor) analysis using srst2, implemented in Nextflow
 
-This pipeline accepts raw (or trimmed) reads in .fastq format and performs MLST (and optional AMR or virulence factor) analyses using srst2 (https://github.com/andrewjpage/docker_mlst/tree/master/srst2). Implemented for the Ilifu (slurm) cluster, which can be modified by adding a custom config file. The srst2 singularity image used was obtained here https://quay.io/repository/biocontainers/srst2?tab=tags
+This pipeline accepts raw (or trimmed) reads in .fastq format and performs MLST (and optional AMR or virulence factor) analyses using srst2 (https://github.com/katholt/srst2). Implemented for the Ilifu (slurm) cluster, which can be modified by adding a custom config file. The srst2 singularity image used was obtained here https://quay.io/repository/biocontainers/srst2?tab=tags
 
 ## Basic usage:
 
