@@ -146,7 +146,7 @@ process srst2 {
         set pairId, file(reads) from ReadPairsToSrst2
 
     output:
-	file("${pairId}_srst2*")	
+	file("${pairId}_srst2")	
 	
     script:      
     geneDB = params.gene_db ? "--gene_db $gene_db" : ''
